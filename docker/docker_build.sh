@@ -8,7 +8,7 @@ docker_id=elliothe
 repo_name=lc4pim
 tag=latest
 # Dockerile used for docker build
-dockerfile_to_use=/Users/elliot/Documents/GitHub/LS4PIM/docker/Dockerfile
+dockerfile_to_use=Dockerfile
 
 # Print arguments
 echo "Dockerfile: ${dockerfile_to_use}"
