@@ -1,7 +1,10 @@
 # LS4PIM
- Logic Synthesis for Processing-in-Memory
- -------------------------------------------
+Logic Compilation for Processing-in-Memory
  
+ -------------------------------------------
+
+This project compiles the high-level function to PIM instructions.
+
  ## C/C++ to Verilog (IR conversion)
  
  ## Netlist Synthesis (Compilation)
