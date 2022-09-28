@@ -1,18 +1,27 @@
-# LS4PIM
+# LC4PIM
 Logic Compilation for Processing-in-Memory
  
  -------------------------------------------
 
-This project compiles the high-level function to PIM instructions.
+This project provide a compiler to convert high-level Boolean function into the the low-level primitives support by bit-serial based processing-in-memory system.
 
- ## C/C++ to Verilog (IR conversion)
- 
- ## Netlist Synthesis (Compilation)
+## Installation
 
- ## Netlist to Instruction (Scheduling + Codegen)  
+## Roadmap
+
+### V-0.1
+- [x] Create the docker for LC4PIM
+- [x] Basic Boolean function parser
+- [ ] use the logic synthesis tool to import the DAG of the Boolean function.
+
+## C/C++ to Verilog (IR conversion)
  
- ## Instruction Execution (Execution)
+## Netlist Synthesis (Compilation)
+
+## Netlist to Instruction (Scheduling + Codegen)  
+
+## Instruction Execution (Execution)
  
- ## Validation
+## Validation
  
- ## Benchmark
+## Benchmark
