@@ -1,0 +1,3 @@
+[submodule "PIMLC-Benchmark"]
+	path = benchmark
+	url = https://github.com/Intelligent-Computing-Research-Group/PIMLC-Benchmark.git
