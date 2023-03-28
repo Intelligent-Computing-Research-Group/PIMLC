@@ -1,0 +1,4 @@
+# Usage
+```
+./simulate.sh outputfilename
+```
