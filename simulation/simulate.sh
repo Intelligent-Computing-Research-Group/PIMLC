@@ -10,9 +10,9 @@ for m in ${type[@]}
     do
     for t in ${baknums[@]}
     do
+        g++ simulate.cpp ../src/*.cpp ../ILP/ILP.cpp -DBANKNUM=$t -D$m -lOsiClp -lCbc -lClp -o simulate
         for j in ${benchmark[@]}
         do
-            g++ simulate.cpp ../src/*.cpp ../ILP/ILP.cpp -DBANKNUM=$t -D$m -lOsiClp -lCbc -lClp -o simulate
             ./simulate ../benchmark/$j.v ${#workload[@]} ${workload[@]} >> $1
             echo "$m $t $j finish"
         done

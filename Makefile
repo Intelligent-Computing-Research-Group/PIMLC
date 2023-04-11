@@ -15,7 +15,7 @@ DIRS	= bin obj
 CXX_OBJS	= obj
 CXX_BINS	= bin
 
-all: $(DIRS) simulate main
+all: $(DIRS) simulate gencode
 
 $(DIRS):
 	$(MKDIR) $@
@@ -26,8 +26,8 @@ simulate:
 	cp $(CXX_BINS)/simulate simulation/simulate
 
 
-main:
-	$(CXX) main.cpp $(SRCS) $(CFLAGS) -o $(CXX_BINS)/main
+gencode:
+	$(CXX) main.cpp $(SRCS) $(CFLAGS) -o $(CXX_BINS)/gencode
 
 
 .PHONY:clean

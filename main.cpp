@@ -56,14 +56,16 @@ int main(int argc, char *argv[])
     bigint simdlatency = 0;
     double simdenergy = 0.0;
 
-    // printf("# compileCPUTime %ldms\n", (clock()-begintime) / (CLOCKS_PER_SEC/1000));
-    // printf("# data %u\n", size);
-    // printf("# input %u\n", G->getinputsize());
-    // printf("# output %u\n", G->getoutputsize());
+    printf("# compileCPUTime %ldms\n", (clock()-begintime) / (CLOCKS_PER_SEC/1000));
+    printf("# blockrows %u\n", BLOCKROW);
+    printf("# blockcols %u\n", BLOCKCOL);
+    printf("# data %u\n", size);
+    printf("# input %u\n", G->getinputsize());
+    printf("# output %u\n", G->getoutputsize());
     for (uint i = 0u; i <= searchbound; ++i) {
         chunksize = 1 << i;
         for (uint j = 0; j < uint(val[i]+0.00001); ++j) {
-            // printInst(sche+i, offset, chunksize);
+            printInst(sche+i, offset, chunksize);
             offset += chunksize;
             // latency += sche[i].latency;
             // energy += sche[i].energy;
