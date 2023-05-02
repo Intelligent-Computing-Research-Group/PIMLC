@@ -45,12 +45,16 @@ int main(int argc, char *argv[])
     char codeline[LINESIZE];
     char *p;
     uint globaloffset = 0;
+    uint globalbitwidth = 64u;
     if (argc < 3) {
         perror("argc must >= 3!\n");
         return -1;
     }
+    if (argc > 4) {
+        globaloffset = atoi(argv[4]);
+    }
     if (argc > 3) {
-        globaloffset = atoi(argv[3]);
+        globalbitwidth = atoi(argv[3]);
     }
     
     uint src, dst;
@@ -127,7 +131,7 @@ int main(int argc, char *argv[])
                     data = data * 10 + *p - '0';
                     ++p;
                 }
-                data = (data + BYTESIZE - 1) / BYTESIZE * BYTESIZE;
+                data = (data + globalbitwidth - 1) / globalbitwidth * globalbitwidth;
             }
             else if ((len = strheadstr(p, "input")) > 0 && (*(p + len) == ' ')) {
                 p += len;
@@ -157,13 +161,16 @@ int main(int argc, char *argv[])
                 ++p;
             }
             uint addr, localoffset;
-            uint len = meshcols*(blockcols/BYTESIZE);
+            // uint len: Number of 'R' trace lines needed for current LOAD instruction
+            uint len = meshcols*blockcols/globalbitwidth;
+            len += (len==0);
             for (int i = 0; i < len; ++i) {
-                localoffset = memoffset*(blockcols/BYTESIZE)+i;
+                localoffset = memoffset*(blockcols/BYTESIZE)+i*(globalbitwidth/BYTESIZE);
                 if (localoffset*BYTESIZE >= data) {
                     break;
                 }
                 addr = (src-meshrows*blockrows)*(data/BYTESIZE) + localoffset;
+                // fprintf(outfile, "%d %d %d %d %d\n", src, meshrows, blockrows, data, localoffset);
                 fprintf(outfile, "0x%08x R\n", addr);
             }
         }
@@ -182,9 +189,11 @@ int main(int argc, char *argv[])
                 ++p;
             }
             uint addr, localoffset;
-            uint len = meshcols*(blockcols/BYTESIZE);
+            // uint len: Number of 'W' trace lines needed for current STORE instruction
+            uint len = meshcols*blockcols/globalbitwidth;
+            len += (len==0);
             for (int i = 0; i < len; ++i) {
-                localoffset = memoffset*(blockcols/BYTESIZE)+i;
+                localoffset = memoffset*(blockcols/BYTESIZE)+i*(globalbitwidth/BYTESIZE);
                 if (localoffset*BYTESIZE >= data) {
                     break;
                 }

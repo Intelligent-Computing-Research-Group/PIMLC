@@ -55,7 +55,9 @@ class StageProcessors {
     double *loadenergy;     ///< the load energy of each PE
     double *midenergy;      ///< the operation+copy energy of each PE
     double *storeenergy;    ///< the store energy of each PE
-    std::deque<InstructionNameSpace::Instruction> inst;    ///< instruction lists
+    std::map<uint, InstructionNameSpace::Instruction> loadinstlist;
+    std::deque<InstructionNameSpace::Instruction> instlist;    ///< instruction lists
+    std::map<uint, InstructionNameSpace::Instruction> storeinstlist;
 
 public:
     StageProcessors *next;  ///< next stage

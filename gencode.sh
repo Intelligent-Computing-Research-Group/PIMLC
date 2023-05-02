@@ -1,6 +1,6 @@
 workload=(1 256 4096 200000)
-benchmark=(adder cavlc dec div int2float log2 sin sqrt)
-baknums=(1 4 16)
+benchmark=(adder cavlc dec div int2float log2 sin)
+baknums=(4)
 type=(SRAM)
 
 rm -rf trace
@@ -18,7 +18,7 @@ for m in ${type[@]}
             for w in ${workload[@]}
             do
                 ./gencode ./benchmark/$j.v $w > ./trace/${m}_${t}_${j}_${w}.asm
-                ./gentrace ./trace/${m}_${t}_${j}_${w}.asm ./trace/${m}_${t}_${j}_${w}.trace
+                ./gentrace ./trace/${m}_${t}_${j}_${w}.asm ./trace/${m}_${t}_${j}_${w}.trace 1024
                 echo "${m}_${t}_${j}_${w}.trace generated"
                 rm -rf ./trace/${m}_${t}_${j}_${w}.asm
             done

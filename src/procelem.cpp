@@ -53,7 +53,6 @@ StageProcessors::~StageProcessors()
     if (storeenergy) {
         delete[] storeenergy;
     }
-    inst.clear();
 }
 
 int StageProcessors::init(uint pn)
@@ -120,7 +119,9 @@ int StageProcessors::clean()
     storelatency = NULL;
     next = NULL;
     prior = NULL;
-    inst.clear();
+    loadinstlist.clear();
+    instlist.clear();
+    storeinstlist.clear();
     return 1;
 }
 
@@ -239,7 +240,7 @@ int StageProcessors::assignTask(BooleanDag* G, uint taskid, uint PEid, bigint st
                 copyinst.dest = MESHADDR(PEid, pe->smallestfreeidx);
                 copyinst.src[0] = MESHADDR(srcpeid, srcidx);
 
-                inst.push_back(copyinst);
+                instlist.push_back(copyinst);
                 while (++(pe->smallestfreeidx) < BLOCKROW && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
 
                 // std::deque<InstructionNameSpace::Instruction>::iterator it = inst.begin();
@@ -281,7 +282,7 @@ int StageProcessors::assignTask(BooleanDag* G, uint taskid, uint PEid, bigint st
                 //     copyinst.op = InstructionNameSpace::COPY;
                 //     copyinst.dest = MESHADDR(PEid, pe->smallestfreeidx);
                 //     copyinst.src[0] = MESHADDR(srcpeid, srcidx);
-                //     inst.push_back(copyinst);
+                //     instlist.push_back(copyinst);
                 //     while (++(pe->smallestfreeidx) < BLOCKROW && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
                 //     // }
 
@@ -306,7 +307,7 @@ int StageProcessors::assignTask(BooleanDag* G, uint taskid, uint PEid, bigint st
                     loadinst.dest = MESHADDR(PEid,pe->overwriteflag);
                     loadinst.src[0] = MESHADDR(pnum, predid);   //TODO: ADD MEM ADDR
 
-                    inst.push_front(loadinst);
+                    loadinstlist.insert(std::make_pair(loadinst.src[0],loadinst));
                     if (pe->smallestfreeidx == pe->overwriteflag) {
                         ++(pe->smallestfreeidx);
                         pe->overwriteflag = pe->smallestfreeidx;
@@ -329,7 +330,7 @@ int StageProcessors::assignTask(BooleanDag* G, uint taskid, uint PEid, bigint st
     }
 
     opinst.dest = MESHADDR(PEid, pe->smallestfreeidx);
-    inst.push_back(opinst);
+    instlist.push_back(opinst);
     pe->cache.insert(std::make_pair(taskid, pe->smallestfreeidx));
     pe->line[pe->smallestfreeidx] = taskid;
     while (++(pe->smallestfreeidx) < BLOCKROW && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
@@ -472,7 +473,7 @@ int StageProcessors::dynamicWeightsAssignTask(BooleanDag* G, uint taskid, uint P
                 loadinst.dest = MESHADDR(PEid,pe->overwriteflag);
                 loadinst.src[0] = MESHADDR(pnum, predid);   //TODO: ADD MEM ADDR
 
-                inst.push_front(loadinst);
+                loadinstlist.insert(std::make_pair(loadinst.src[0],loadinst));
                 loadlatency[PEid] += LOADLATENCY * threads;
                 // printf("    LOAD %d %d %d %d\n", loadinst.src[0], loadinst.src[1], loadinst.src[2], loadinst.dest);
                 if (pe->smallestfreeidx == pe->overwriteflag) {
@@ -493,7 +494,7 @@ int StageProcessors::dynamicWeightsAssignTask(BooleanDag* G, uint taskid, uint P
     uint p1, p2, level;
     while (p) {
         tmp = p->next;
-        inst.push_back(p->inst);
+        instlist.push_back(p->inst);
         // printf("    COPY %d %d %d %d\n", p->inst.src[0], p->inst.src[1], p->inst.src[2], p->inst.dest);
         p1 = p->inst.src[0] / BLOCKROW;
         p2 = p->inst.dest / BLOCKROW;
@@ -513,7 +514,7 @@ int StageProcessors::dynamicWeightsAssignTask(BooleanDag* G, uint taskid, uint P
     }
     delete sync;
     opinst.dest = MESHADDR(PEid, pe->smallestfreeidx);
-    inst.push_back(opinst);
+    instlist.push_back(opinst);
     // printf("    OP %d %d %d %d\n", opinst.src[0], opinst.src[1],opinst.src[2], opinst.dest);
     pe->cache.insert(std::make_pair(taskid, pe->smallestfreeidx));
     pe->line[pe->smallestfreeidx] = taskid;
@@ -617,7 +618,7 @@ int StageProcessors::assignFinish()
                 storeinst.src[0] = MESHADDR(i,mp->second);
                 storeinst.dest = MESHADDR(pnum, mp->first);
                 storelatency[storeinst.src[0]/BLOCKROW] += STORELATENCY * threads;
-                inst.push_back(storeinst);
+                storeinstlist.insert(std::make_pair(storeinst.dest,storeinst));
             }
         }
     }
@@ -632,15 +633,14 @@ int StageProcessors::calcLatency()
     memset((void*)(midlatency), 0, pnum*sizeof(bigint));
     memset((void*)(storelatency), 0, pnum*sizeof(bigint));
     uint threads = MESHSIZE / pnum;
-    std::deque<InstructionNameSpace::Instruction>::iterator it;
-    for (it = inst.begin(); it < inst.end(); ++it) {
-        if (it->op == InstructionNameSpace::LOAD) {
-            loadlatency[it->dest/BLOCKROW] += LOADLATENCY * threads;
-        }
-        else if (it->op == InstructionNameSpace::STORE) {
-            storelatency[it->src[0]/BLOCKROW] += STORELATENCY * threads;
-        }
-        else if (it->op == InstructionNameSpace::COPY) {
+    for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
+        loadlatency[it->second.dest/BLOCKROW] += LOADLATENCY * threads;
+    }
+    for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = storeinstlist.begin(); it != storeinstlist.end(); ++it) {
+        storelatency[it->second.src[0]/BLOCKROW] += STORELATENCY * threads;
+    }
+    for (std::deque<InstructionNameSpace::Instruction>::iterator it = instlist.begin(); it < instlist.end(); ++it) {
+        if (it->op == InstructionNameSpace::COPY) {
             uint p1, p2, level;
             p1 = it->src[0] / BLOCKROW;
             p2 = it->dest / BLOCKROW;
@@ -671,15 +671,14 @@ int StageProcessors::calcEnergy()
     memset((void*)(midenergy), 0, pnum*sizeof(double));
     memset((void*)(storeenergy), 0, pnum*sizeof(double));
     uint threads = MESHSIZE / pnum;
-    std::deque<InstructionNameSpace::Instruction>::iterator it;
-    for (it = inst.begin(); it < inst.end(); ++it) {
-        if (it->op == InstructionNameSpace::LOAD) {
-            loadenergy[it->dest/BLOCKROW] += LOADLATENCY * threads;
-        }
-        else if (it->op == InstructionNameSpace::STORE) {
-            storeenergy[it->src[0]/BLOCKROW] += STORELATENCY * threads;
-        }
-        else if (it->op == InstructionNameSpace::COPY) {
+    for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
+        loadenergy[it->second.dest/BLOCKROW] += LOADLATENCY * threads;
+    }
+    for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = storeinstlist.begin(); it != storeinstlist.end(); ++it) {
+        storeenergy[it->second.src[0]/BLOCKROW] += STORELATENCY * threads;
+    }
+    for (std::deque<InstructionNameSpace::Instruction>::iterator it = instlist.begin(); it < instlist.end(); ++it) {
+        if (it->op == InstructionNameSpace::COPY) {
             uint p1, p2, level;
             p1 = it->src[0] / BLOCKROW;
             p2 = it->dest / BLOCKROW;
@@ -704,10 +703,10 @@ int StageProcessors::calcEnergy()
 /* Setters */
 int StageProcessors::removeStoreInst(uint taskid)
 {
-    std::deque<InstructionNameSpace::Instruction>::iterator it;
-    for (it = inst.begin(); it != inst.end(); ++it) {
-        if (it->op == InstructionNameSpace::STORE && it->taskid == taskid) {
-            inst.erase(it);
+    std::map<uint, InstructionNameSpace::Instruction>::iterator it;
+    for (it = storeinstlist.begin(); it != storeinstlist.end(); ++it) {
+        if (it->second.taskid == taskid) {
+            storeinstlist.erase(it);
             // it->op = InstructionNameSpace::NOP;
             return 1;
         }
@@ -849,13 +848,13 @@ void StageProcessors::getTime2SpatialUtil(std::map<bigint, uint> &res, bigint of
         assigned[i] = false;
     }
 
-    std::deque<InstructionNameSpace::Instruction>::iterator it;
+    
 
     bigint curtime;
     std::map<bigint, uint>::iterator resit;
-    it = inst.begin();
-    while (it->op == InstructionNameSpace::LOAD) {
-        assigned[it->dest] = true;
+    
+    for (std::map<uint,InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
+        assigned[it->second.dest] = true;
         midstart += LOADLATENCY * threads;
         curtime = midstart;
         resit = res.find(curtime+offset);
@@ -877,10 +876,9 @@ void StageProcessors::getTime2SpatialUtil(std::map<bigint, uint> &res, bigint of
                 ++resit;
             }
         }
-        ++it;
     }
 
-    while (it->op != InstructionNameSpace::STORE) {
+    for (std::deque<InstructionNameSpace::Instruction>::iterator it = instlist.begin(); it != instlist.end(); ++it) {
         uint inc = assigned[it->dest] ? 0u : 1u;
         assigned[it->dest] = true;
         if (it->op == InstructionNameSpace::COPY) {
@@ -965,9 +963,29 @@ void StageProcessors::printScheduleByPE()
 
 void StageProcessors::printInstructions(int stage)
 {
-    std::deque<InstructionNameSpace::Instruction>::iterator it;
     // printf("Stage %d:\n", stage);
-    for (it = inst.begin(); it < inst.end(); ++it) {
+
+    for (std::map<uint,InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
+        int pe[4] = {it->second.src[0]/BLOCKROW, it->second.src[1]/BLOCKROW,it->second.src[2]/BLOCKROW,it->second.dest/BLOCKROW};
+        // printf("\t%-8s\t%s%d[%d] %s%d[%d] %s%d[%d] %d[%d]", \
+        //     InstructionNameSpace::instname[(int)(it->op)], \
+        //     it->invflag[0]?"~":"", it->src[0], pe[0], \
+        //     it->invflag[1]?"~":"", it->src[1], pe[1], \
+        //     it->invflag[2]?"~":"", it->src[2], pe[2], \
+        //     it->dest, pe[3]);
+        printf("\t%-8s\t%s%d %s%d %s%d %d", \
+            InstructionNameSpace::instname[(int)(it->second.op)], \
+            it->second.invflag[0]?"~":"", it->second.src[0], \
+            it->second.invflag[1]?"~":"", it->second.src[1], \
+            it->second.invflag[2]?"~":"", it->second.src[2], \
+            it->second.dest);
+        if (it->second.op >= InstructionNameSpace::INV) {
+            printf("\t// Task.%d finished", it->second.taskid);
+        }
+        printf("\n");
+    }
+
+    for (std::deque<InstructionNameSpace::Instruction>::iterator it = instlist.begin(); it < instlist.end(); ++it) {
         int pe[4] = {it->src[0]/BLOCKROW, it->src[1]/BLOCKROW,it->src[2]/BLOCKROW,it->dest/BLOCKROW};
         // printf("\t%-8s\t%s%d[%d] %s%d[%d] %s%d[%d] %d[%d]", \
         //     InstructionNameSpace::instname[(int)(it->op)], \
@@ -983,6 +1001,26 @@ void StageProcessors::printInstructions(int stage)
             it->dest);
         if (it->op >= InstructionNameSpace::INV) {
             printf("\t// Task.%d finished", it->taskid);
+        }
+        printf("\n");
+    }
+
+    for (std::map<uint,InstructionNameSpace::Instruction>::iterator it = storeinstlist.begin(); it != storeinstlist.end(); ++it) {
+        int pe[4] = {it->second.src[0]/BLOCKROW, it->second.src[1]/BLOCKROW,it->second.src[2]/BLOCKROW,it->second.dest/BLOCKROW};
+        // printf("\t%-8s\t%s%d[%d] %s%d[%d] %s%d[%d] %d[%d]", \
+        //     InstructionNameSpace::instname[(int)(it->op)], \
+        //     it->invflag[0]?"~":"", it->src[0], pe[0], \
+        //     it->invflag[1]?"~":"", it->src[1], pe[1], \
+        //     it->invflag[2]?"~":"", it->src[2], pe[2], \
+        //     it->dest, pe[3]);
+        printf("\t%-8s\t%s%d %s%d %s%d %d", \
+            InstructionNameSpace::instname[(int)(it->second.op)], \
+            it->second.invflag[0]?"~":"", it->second.src[0], \
+            it->second.invflag[1]?"~":"", it->second.src[1], \
+            it->second.invflag[2]?"~":"", it->second.src[2], \
+            it->second.dest);
+        if (it->second.op >= InstructionNameSpace::INV) {
+            printf("\t// Task.%d finished", it->second.taskid);
         }
         printf("\n");
     }
