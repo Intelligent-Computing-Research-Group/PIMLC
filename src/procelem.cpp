@@ -925,7 +925,6 @@ void StageProcessors::getTime2SpatialUtil(std::map<bigint, uint> &res, bigint of
                 }
             }
         }
-        ++it;
     }
 
     delete[] assigned;

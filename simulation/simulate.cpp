@@ -118,20 +118,19 @@ int main(int argc, char *argv[])
         double simdmaxspatialutil = 0.0;
         double simdavgspatialutil = 0.0;
 
-        for (uint i = 0u; i <= searchbound; ++i) {
-            chunksize = 1 << i;
-            for (uint j = 0; j < uint(val[i]+0.000001); ++j) {
-                // printInst(sche+i, offset, chunksize);
+        for (uint k = 0u; k <= searchbound; ++k) {
+            chunksize = 1 << k;
+            for (uint j = 0; j < uint(val[k]+0.000001); ++j) {
+                // printInst(sche+k, offset, chunksize);
                 // offset += chunksize;
                 spatialutil.insert(std::make_pair(latency, 0u));
-                sche[i].p->getTime2SpatialUtil(spatialutil, latency);
-                latency += sche[i].latency;
-                oplatency += sche[i].oplatency;
-                energy += sche[i].energy;
-                // printf("latency: %lld, energy: %lf\n", sche[i].latency, sche[i].energy);
+                sche[k].p->getTime2SpatialUtil(spatialutil, latency);
+                latency += sche[k].latency;
+                oplatency += sche[k].oplatency;
+                energy += sche[k].energy;
+                // printf("latency: %lld, energy: %lf\n", sche[k].latency, sche[k].energy);
             }
         }
-
 
         // if SIMD
         uint ms = MESHSIZE * BLOCKCOL;
@@ -139,10 +138,9 @@ int main(int argc, char *argv[])
         Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
         if (searchbound < LOG2(MESHSIZE)) {
             searchbound = LOG2(MESHSIZE);
-            sche[searchbound] = rankuHEFTSchedule(G, MESHSIZE);
+            sche[searchbound] = rankuDynamicWeightsSchedule(G, MESHSIZE);
             cost[searchbound] = sche[searchbound].latency;
         }
-        
         for (uint j = 0; j < Bsize/MESHSIZE; ++j) {
             // printInst(sche+i, offset, chunksize);
             // offset += chunksize;
