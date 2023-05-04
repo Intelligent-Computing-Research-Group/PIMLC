@@ -24,6 +24,8 @@ typedef struct Schedule {
 
 Schedule rankuHEFTSchedule(BooleanDag *G, uint workload);
 
+Schedule rankuDynamicHEFTSchedule(BooleanDag *G, uint workload);
+
 Schedule rankuDynamicWeightsSchedule(BooleanDag *G, uint workload);
 
 void printInst(Schedule *s, uint offset, uint chunksize);
