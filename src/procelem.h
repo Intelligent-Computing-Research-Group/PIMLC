@@ -110,6 +110,7 @@ public:
 
     /* Visitors */
     uint getTaskNum() const;
+    uint getTaskNum(uint id) const;
     bigint getLatency() const;
     bigint getOPLatency() const;
     double getEnergy() const;

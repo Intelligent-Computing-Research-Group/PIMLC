@@ -721,6 +721,11 @@ uint StageProcessors::getTaskNum() const
     return schedule.size();
 }
 
+uint StageProcessors::getTaskNum(uint id) const
+{
+    return PE[id].tasks.size();
+}
+
 bigint StageProcessors::getLatency() const
 {
     int i = 0;

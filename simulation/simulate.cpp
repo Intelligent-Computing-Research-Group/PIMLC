@@ -178,6 +178,8 @@ int main(int argc, char *argv[])
             temporalutil, simdtemporalutil, 
             maxspatialutil, avgspatialutil, 
             simdmaxspatialutil, simdavgspatialutil);
+
+        // printf("%s,%lf,%lf\n",argv[3+i],(double)(latency)/1000.0,oldcost[i]/(double)(latency)*1000.0);
         // printf("final latency: %lld ns, energy: %lf nJ\n", latency / 1000ll, energy / 1000.0);
         // printf("simd  latency: %lld ns, energy: %lf nJ\n", simdlatency / 1000ll, simdenergy / 1000.0);
         delete solver;
