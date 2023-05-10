@@ -29,6 +29,33 @@ double calculateStandardDeviation(bigint arr[], int n) {
     return sqrt(stdDeviation / n);
 }
 
+double calculateStandardDeviation(bigint arr[], double m, int n) {
+    double mean, stdDeviation = 0.0;
+    //calculate standard deviation
+    for (int i = 0; i < n; i++) {
+        stdDeviation += pow(arr[i] - m, 2);
+    }
+
+    return sqrt(stdDeviation / n);
+}
+
+double calculateMean(bigint arr[], int n) {
+    double sum = 0.0, mean, stdDeviation = 0.0;
+
+    //calculate mean
+    for (int i = 0; i < n; i++) {
+        sum += arr[i];
+    }
+    mean = sum / n;
+
+    //calculate standard deviation
+    for (int i = 0; i < n; i++) {
+        stdDeviation += pow(arr[i] - mean, 2);
+    }
+
+    return sqrt(stdDeviation / n);
+}
+
 StageProcessors* HEFT(BooleanDag *G, int pnum, std::multimap<bigint, uint> &ranklist)
 {
     StageProcessors *stages = NULL;
@@ -194,6 +221,59 @@ StageProcessors* DynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint, u
     return stages;
 }
 
+StageProcessors* CPDynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint, uint> &ranklist, std::set<uint> &maincluster)
+{
+    StageProcessors *stages = NULL;
+    StageProcessors *prior = NULL;
+    StageProcessors **p = &stages;
+    uint stagecnt = 0;
+
+    uint size = G->getsize();
+
+    bool *assigned = new bool[size];
+    for (uint i = 0; i < size; ++i) {
+        assigned[i] = false;
+    }
+
+    while (ranklist.size()) {
+        ++stagecnt;
+        std::multimap<bigint, uint>::iterator iter = ranklist.begin();
+        uint taskid;
+        uint pid = 0;
+        *p = new StageProcessors;
+        (*p)->init(pnum);
+        (*p)->prior = prior;
+
+        uint taskcnt = 0;
+        while (ranklist.size() && pid != UINT_MAX) {
+            iter = ranklist.begin();
+            taskid = iter->second;
+            pid = placeAcdtoCPDynamicWeights(G, *p, maincluster, taskid, ranklist.size());
+            if (pid != UINT_MAX) {
+                // if (pnum == 64) {
+                //     printf("[%u][%c] ", taskid, (maincluster.find(taskid)==maincluster.end())?'n':'m');
+                //     for (uint i = 0; i < pnum; ++i) {
+                //         printf("%u ", (*p)->getTaskNum(i));
+                //     }
+                //     printf("\n\n");
+                // }
+                ranklist.erase(iter);
+                ++taskcnt;
+                assigned[taskid] = true;
+                (*p)->releaseMem(G, taskid, assigned);
+            }
+        }
+        (*p)->assignFinish();
+        // (*p)->printScheduleByPE();
+        // (*p)->printInstructions(stagecnt-1);
+        prior = *p;
+        p = &((*p)->next);
+    }
+    delete[] assigned;
+    return stages;
+}
+
+
 double totalCost(double curcost, double futurecost, double stddeviation, double maxrow, StageProcessors *P, uint tasksleft)
 {
     double cost;
@@ -236,7 +316,7 @@ uint getMaxidx(bigint *arr, uint n)
     }
     bigint max = arr[idx];
     for (uint i = 1u; i < n; ++i) {
-        if (max < arr[i]) {
+        if (max <= arr[i]) {
             max = arr[i];
             idx = i;
         }
@@ -404,6 +484,228 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
         }
         delete[] newmidlatency;
     }
+    if (placeable) {
+        if (copycnt > 0u) {
+            avgblkcost = avgblkcost * avgcnt + copylat;
+            avgcnt += copycnt;
+            avgblkcost /= avgcnt;
+        }
+        // printf("assign to %u\n", pid);
+        P->dynamicWeightsAssignTask(G, taskid, pid);
+    }
+    else {
+        return UINT_MAX;
+    }
+    return pid;
+}
+
+uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint> &maincluster, uint taskid, uint tasksleft)
+{
+    Vertice *v = G->getvertice(taskid);
+    uint pnum = P->getpnum();
+    uint prednum = v->prednum;
+    if (prednum == 0) {
+        return pnum;
+    }
+
+    if (maincluster.find(taskid) != maincluster.end()) {
+        if (P->checkPlaceable(G, pnum-1, taskid)) {
+            P->dynamicWeightsAssignTask(G, taskid, pnum-1);
+            return pnum-1;
+        }
+        else {
+            return UINT_MAX;
+        }
+    }
+
+    uint pid;   ///< return value
+    double cost = 1e308;
+    static double avgblkcost = 0;
+    static double avgcnt = 0;
+
+    if (P->getTaskNum() == 0) {
+        avgblkcost = OPLATENCY;
+        avgcnt = 0;
+    }
+    /**
+     * curcost: determine a pe, (check each pred, find best src pe)->map, get blk time, update avg
+     * futurecost: check each succ, check their pred pos, calc exp blk time
+     * stddeviation: normalcalc
+     * maxrow: the change of max row
+    */
+    uint threads = MESHSIZE / pnum;
+    uint succnum = v->succnum;
+    ProcessElem* pe;
+    bigint *midlat = P->getMidLatency();
+    double mean = calculateMean(midlat, pnum);
+    double curstdDeviation = calculateStandardDeviation(midlat, mean, pnum);
+    // if (pnum == 64 && taskid == 189) {
+    //     printf("\n!!old 189!!\n");
+    //     for (uint i = 0; i < pnum; ++i) {
+    //         printf("%lld ", midlat[i]);
+    //     }
+    //     printf("\n");
+    // }
+    uint maxidx = getMaxidx(midlat, pnum);
+    bigint copylat;
+    uint copycnt;
+    ///< Try each pe as target
+    int placeable = 0;
+    bool afterfirstcompensate, compensate_mark;
+
+    compensate_mark = false;
+    for (uint i = 0u; i < pnum; ++i) {
+        afterfirstcompensate = false;
+        double tmpcost;
+        bigint *newmidlatency = new bigint[pnum];
+        bigint curmaxpelat = midlat[i];
+        bigint cplat = 0;
+        memcpy(newmidlatency, midlat, sizeof(bigint)*pnum);
+
+        pe = P->getPE(i);
+        if (P->checkPlaceable(G, i, taskid)) {
+            placeable = 1;
+        }
+        else {
+            continue;
+        }
+        double curcost, futurecost, stddeviation, maxrow;
+        uint cptime = 0u;
+        curcost = 0;
+        futurecost = 0;
+        stddeviation = 0;
+        maxrow = 0;
+
+        ///< get curcost - check each pred, find best src pe
+        for (uint j = 0u; j < prednum; ++j) {
+            uint predid = v->predecessors[j]->src->id;
+            bigint minblkt = BIGINT_MAX;
+            bool newselfblk = false;
+            ProcessElem *srcpe;
+            uint srcpeid;
+
+            ///< find local data -> do not need copy / load
+            if (pe->cache.find(predid) != pe->cache.end()) {
+                continue;
+            }
+
+            ///< find src with min blk time
+            for (uint k = 0; k < pnum; ++k) {
+                srcpe = P->getPE(k);
+                if (k != i && srcpe->cache.find(predid)!=srcpe->cache.end()) {
+                    ///< find this task in cache
+                    if (midlat[k] > midlat[i] && midlat[k] <= curmaxpelat) {
+                        ///< do not need extra blk
+                        newselfblk = false;
+                        minblkt = 0;
+                        srcpeid = srcpe->id;
+                        break;
+                    }
+                    else if (midlat[k] > midlat[i]) {
+                        ///< need more self blk
+                        bigint dist = midlat[k] - curmaxpelat;
+                        if (dist < minblkt) {
+                            newselfblk = true;
+                            minblkt = dist;
+                            srcpeid = srcpe->id;
+                        }
+                    }
+                    else {
+                        ///< need src pe's blk
+                        bigint dist = midlat[i] - midlat[k];
+                        if (dist < minblkt) {
+                            newselfblk = false;
+                            minblkt = dist;
+                            srcpeid = srcpe->id;
+                        }
+                    }
+                }
+            }
+
+            ///< need copy(not load) - update current max self blk time
+            if (minblkt < BIGINT_MAX) {
+                curcost += minblkt;
+                ++cptime;
+                if (newselfblk) {
+                    curmaxpelat += minblkt;
+                    newmidlatency[i] = curmaxpelat;
+                    if (srcpeid == pnum-1) {
+                        uint level = getCommLevel(pnum, i, srcpeid);
+                        uint maxthreads = MaxCopyThread[level] > threads ? threads : MaxCopyThread[level];
+                        cplat += CommWeight[level] * (threads / maxthreads);
+                    }
+                }
+                else {
+                    newmidlatency[srcpeid] = curmaxpelat;
+                    if (i == pnum-1) {
+                        uint level = getCommLevel(pnum, i, srcpeid);
+                        uint maxthreads = MaxCopyThread[level] > threads ? threads : MaxCopyThread[level];
+                        cplat += CommWeight[level] * (threads / maxthreads);
+                    }
+                }
+            }
+        }
+        newmidlatency[i] += OPLATENCY;
+
+        ///< get futurecost - check each pred, find best src pe
+        for (uint j = 0u; j < succnum; ++j) {
+            Vertice *succ = v->successors[j]->dest;
+            uint succid = succ->id;
+            uint succprednum = succ->prednum;
+            for (uint k = 0u; k < succprednum; ++k) {
+                if (succ->predecessors[k]->src->id != taskid) {
+                    if (pe->cache.find(succ->predecessors[k]->src->id) == pe->cache.end()) {
+                        futurecost += avgblkcost;
+                    }
+                }
+            }
+        }
+
+        ///< get stddev change
+        stddeviation = calculateStandardDeviation(newmidlatency, pnum);
+        // if (pnum == 64 && taskid == 189) {
+        //     printf("\n!!new 189!!\n");
+        //     for (uint i = 0; i < pnum; ++i) {
+        //         printf("%lld ", newmidlatency[i]);
+        //     }
+        //     printf("\n");
+        // }
+
+        ///< get max row change
+        maxrow = cplat;
+        if (pnum-1 == i || cplat > 0) {
+            maxrow += OPLATENCY;
+        }
+        // printf("Trying to assign %u to %u, weights: ", taskid, i);
+        if (midlat[i] < midlat[maxidx] - 2*stddeviation) {
+            if (compensate_mark == false) {
+                compensate_mark = true;
+            }
+            else {
+                afterfirstcompensate = true;
+            }
+        }
+        else if (compensate_mark) {
+            delete[] newmidlatency;
+            continue;
+        }
+        tmpcost = totalCost(0, 0, stddeviation-curstdDeviation, maxrow, P, tasksleft);
+
+        if ((compensate_mark&&(!afterfirstcompensate)) || (afterfirstcompensate&&(tmpcost<cost)) || ((!compensate_mark)&&(tmpcost<cost))) {
+            cost = tmpcost;
+            pid = i;
+            copylat = curcost;
+            copycnt = cptime;
+        }
+        // if (pnum == 64) {
+        //     printf("%u(%lf,%lf) ",i, stddeviation, maxrow);
+        // }
+        
+        delete[] newmidlatency;
+    }
+    // if (pnum == 64) {
+    //     printf("\n");
+    // }
     if (placeable) {
         if (copycnt > 0u) {
             avgblkcost = avgblkcost * avgcnt + copylat;

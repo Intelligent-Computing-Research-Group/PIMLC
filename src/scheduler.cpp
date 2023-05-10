@@ -102,6 +102,52 @@ Schedule rankuDynamicWeightsSchedule(BooleanDag *G, uint workload)
     return sche;
 }
 
+Schedule rankuCPDynamicWeightsSchedule(BooleanDag *G, uint workload)
+{
+    // Init
+    Schedule sche;
+    sche.chunksize = workload;
+    bigint *priority;
+    int pnum = MESHSIZE / workload;
+    bigint totalms = 0;
+    if (pnum <= 0) {
+        exit(-1);
+    }
+    uint size = G->getsize();
+
+    // priority - ranku
+    std::set<uint> maincluster;
+    G->getMainCluster(maincluster, COMMWEIGHT*2 / OPWEIGHT);
+    priority = Priority::ranku(G);
+    G->setPriority(priority);
+    std::multimap<bigint, uint> ranklist;   ///< <rank, taskid>
+    
+    for (uint i = 0; i < size; ++i) {
+        ranklist.insert(std::make_pair(priority[i], i));    ///< ordered list(map)
+    }
+
+    // task placement - DynamicWeights
+    StageProcessors* p = CPDynamicWeights(G, pnum, ranklist, maincluster);
+    sche.p = p;
+    sche.latency = 0;
+    sche.oplatency = 0;
+    sche.energy = 0;
+    while (p) {
+        // p->calcLatency();
+        p->calcEnergy();
+        sche.latency += p->getLatency();
+        sche.oplatency += p->getOPLatency();
+        sche.energy += p->getEnergy();
+
+        // printf("%lld %lf\n", sche.latency, sche.energy);
+        p = p->next;
+    }
+
+    delete[] priority;
+    return sche;
+}
+
+
 void printInst(Schedule *s, uint offset, uint chunksize)
 {
     StageProcessors **p = &(s->p);

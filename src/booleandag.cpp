@@ -8,6 +8,7 @@
  */
 
 #include <cstdio>
+#include <iostream>
 #include "booleandag.h"
 
 ///< WIP
@@ -225,6 +226,220 @@ Vertice* BooleanDag::getvertice(uint id)
 bigint BooleanDag::getPriority(uint id)
 {
     return prio[id];
+}
+
+int BooleanDag::getCriticalPath(std::set<uint> & res)
+{
+    uint size = getsize();
+    int cnt = 0;
+
+    // if there is only one node, output it
+    if (size == 1) {
+        res.insert(res.end(), 0);
+        return 1;
+    }
+    std::vector<int> vis(size, 0);
+    std::queue<uint> q;
+
+    // find the nodes with no predecessors
+    std::vector<int> indegree(size, 0);
+    for (uint i = 0; i < size; i++) {
+        indegree[i] = getvertice(i)->prednum;
+        if (indegree[i] == 0)
+            q.push(i);
+    }
+
+    int max_ve = -1;
+    std::stack<uint> topo;
+    std::vector<int> ve(size, 0);
+    while (!q.empty()) {
+        uint u = q.front();
+        q.pop();
+        topo.push(u);
+        Vertice *now = getvertice(u);
+        for (uint i = 0; i < now->succnum; i++) {
+            uint v = now->successors[i]->dest->id;
+            if (--indegree[v] == 0)
+                q.push(v);
+            ve[v] = std::max(ve[v], ve[u] + (int)now->weight + (int)now->successors[i]->weight);
+            max_ve = std::max(max_ve, ve[v]);
+        }
+    }
+    // update vl
+    // vl[u] = min{vl[v] - weight(u) - weight(u, v)}
+    std::vector<int> vl(size, max_ve);
+    while (!topo.empty())
+    {
+        uint u = topo.top();
+        topo.pop();
+        Vertice *now = getvertice(u);
+        for (uint i = 0; i < now->succnum; i++)
+        {
+            uint v = now->successors[i]->dest->id;
+            vl[u] = std::min(vl[u], vl[v] - (int)now->weight - (int)now->successors[i]->weight);
+        }
+    }
+
+    int k = 0;
+    int e, l, found = 0;
+    // find the first egde with e = l
+    while (k < size && found == 0)
+    {
+        Vertice *now = getvertice(k);
+        e = ve[k];
+        for (uint i = 0; i < now->succnum; i++)
+        {
+            uint v = now->successors[i]->dest->id;
+            l = vl[v] - now->weight - now->successors[i]->weight;
+            // std::cout << now->name << " " << e << " " << l << std::endl;
+            if (e == l) {
+                found = 1, vis[k] = 1, vis[v] = 1;
+                res.insert(res.end(), v);
+                // std::cout << now->name << " " << getvertice(v)->name << " ";
+                ++cnt;
+                k = v;
+                break;
+            }
+        }
+        if (found == 0)
+            k++;
+    }
+    // DFS to find the critical path
+    while (k < size && found == 1)
+    {
+        found = 0;
+        Vertice *now = getvertice(k);
+        e = ve[k];
+        for (uint i = 0; i < now->succnum; i++)
+        {
+            uint v = now->successors[i]->dest->id;
+            if (vis[v] != 0)
+                continue;
+            l = vl[v] - now->successors[i]->dest->weight - now->successors[i]->weight;
+            if (e == l)
+            {
+                found = 1, vis[v] = 1;
+                res.insert(res.end(), v);
+                // std::cout << getvertice(v)->name << " ";
+                ++cnt;
+                k = v;
+                break;
+            }
+        }
+    }
+    return cnt;
+}
+
+
+
+
+/// @brief 
+/// @param cluster 
+/// @param depth 
+/// @return 
+typedef struct MinDepthPreds {
+    // uint id;
+    uint mindepth;
+    std::set<Vertice*> preds;
+} MinDepthPreds;
+
+// template <typename T>
+// void clearqueue(std::queue<T> &q)
+// {
+//     std::queue<T> empty;
+//     std::swap(q, empty);
+// }
+
+int BooleanDag::getMainCluster(std::set<uint> & cluster, uint depth)
+{
+    if (depth < 1) {
+        return cluster.size();
+    }
+    if (cluster.size() < 1) {
+        getCriticalPath(cluster);
+    }
+    std::vector<bool> visited(size, false);
+    for (auto it = cluster.begin(); it != cluster.end(); ++it) {
+        visited[*it] = true;
+    }
+    std::map<Vertice*, MinDepthPreds> records;
+    std::set<uint> ext;
+    std::queue<Vertice*> q;
+    MinDepthPreds r;
+    for (auto it = cluster.begin(); it != cluster.end(); ++it) {
+        Vertice *v = V + *it;
+        uint succnum = v->succnum;
+        for (uint i = 0; i < succnum; ++i) {
+            Vertice *succ = v->successors[i]->dest;
+            if (cluster.find(succ->id) != cluster.end() || ext.find(succ->id) != ext.end() || records.find(succ) != records.end()) continue;
+            records.insert(std::make_pair(succ, r));
+            q.push(succ);
+        }
+    }
+    do {
+        /** childs of nodes in extend set from last loop **/
+        for (auto it = ext.begin(); it != ext.end(); ++it) {
+            Vertice *v = V + *it;
+            uint succnum = v->succnum;
+            for (uint i = 0; i < succnum; ++i) {
+                Vertice *succ = v->successors[i]->dest;
+                if (cluster.find(succ->id) != cluster.end() || ext.find(succ->id) != ext.end() || records.find(succ) != records.end()) continue;
+                records.insert(std::make_pair(succ, r));
+                q.push(succ);
+            }
+        }
+        /** init the extend set **/
+        ext.clear();
+        r.mindepth = 0;
+
+        ///< start from these nodes
+        for (uint i = 0; i < depth; ++i) {
+            uint qsize = q.size();
+            for (uint j = 0; j < qsize; ++j) {
+                Vertice *node = q.front();
+                q.pop();
+                uint nodesuccnum = node->succnum;
+                for (uint k = 0; k < nodesuccnum; ++k) {
+                    Vertice *succ = node->successors[k]->dest;
+                    if (cluster.find(succ->id) != cluster.end() || ext.find(succ->id) != ext.end()) {
+                        ///< found in cluster/ext, blongs to main cluster
+                        ///< add its ancestors into ext set
+                        std::queue<Vertice*> qpreds;
+                        qpreds.push(node);
+                        while (!qpreds.empty()) {
+                            Vertice *cur = qpreds.front();
+                            qpreds.pop();
+                            ext.insert(cur->id);
+                            auto rec = records.find(cur);
+                            for (auto it = rec->second.preds.begin(); it != rec->second.preds.end(); ++it) {
+                                qpreds.push(*it);
+                            }
+                        }
+                    }
+                    else if (i+1 < depth){
+                        ///< else record it and push it into the queue for deeper search
+                        auto it = records.find(succ);
+                        if (it != records.end()) {
+                            if (it->second.mindepth == i+1) {
+                                it->second.preds.insert(node);
+                            }
+                        }
+                        else {
+                            MinDepthPreds r;
+                            r.mindepth = i+1;
+                            r.preds.insert(node);
+                            records.insert(std::make_pair(succ, r));
+                            q.push(succ);
+                        }
+                    }
+                }
+            }
+        }
+        cluster.insert(ext.begin(), ext.end());
+        { std::queue<Vertice*> empty; std::swap(q, empty); };
+        records.clear();
+    } while(ext.size());
+    return cluster.size();
 }
 
 void BooleanDag::traversePrint()
