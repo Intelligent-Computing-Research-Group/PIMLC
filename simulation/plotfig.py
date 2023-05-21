@@ -8,13 +8,13 @@ from scipy.stats.mstats import gmean
 
 import matplotlib as mpl
 
-mpl.rcParams.update(
-{
-'text.usetex': False,
-'font.family': 'stixgeneral',
-'mathtext.fontset': 'stix',
-}
-)
+# mpl.rcParams.update(
+# {
+# 'text.usetex': False,
+# 'font.family': 'stixgeneral',
+# 'mathtext.fontset': 'stix',
+# }
+# )
 
 '''
 memorytype-memorysize
@@ -182,114 +182,114 @@ for bm in benchmarkspeedup:
 plt.figure(figsize=(20,6))
 
 plt.subplot(121)
-plt.tick_params(labelsize=18)
+plt.tick_params(labelsize=20)
 coloridx=0
 for key in speedup:
     plt.plot(workload, speedup[key], color=memcolors[coloridx], linewidth=2, label=key)
     coloridx=coloridx+1
 plt.semilogx()
-plt.xlabel("Workload",fontsize=20)
-plt.ylabel("Speedup",fontsize=25)
-plt.title("PIMLC Speedup per Memory Spec", size=25)
-plt.legend(fontsize=14,ncol=2,frameon=False)
+plt.xlabel("Workload Parallelism $n$",fontsize=25)
+plt.ylabel("Speedup Rate",fontsize=25)
+plt.title("PIM Speedup w.r.t $n$ and #banks", size=25)
+plt.legend(fontsize=17,ncol=1,frameon=False)
 
 
 plt.subplot(122)
-plt.tick_params(labelsize=18)
+plt.tick_params(labelsize=20)
 coloridx=0
 for key in benchmarkspeedup:
     plt.plot(workload, benchmarkspeedup[key], color=colors[coloridx], linewidth=2, label=key)
     coloridx=coloridx+1
 plt.semilogx()
-plt.xlabel("Workload",fontsize=22)
-plt.ylabel("Speedup",fontsize=25)
-plt.title("PIMLC Speedup per Benchmark", size=25)
-plt.legend(fontsize=15,ncol=2,frameon=False)
+plt.xlabel("Workload Parallelism $n$",fontsize=25)
+# plt.ylabel("Speedup Rate",fontsize=25)
+plt.title("PIM Speedup per Benchmark", size=25)
+plt.legend(fontsize=17,ncol=1,frameon=False)
 plt.subplots_adjust(wspace=0.15)
-plt.savefig('figures/PIM_speedup.pdf')
+plt.savefig('figures/PIM_speedup.pdf',bbox_inches='tight')
 
 
 plt.figure(figsize=(20,6))
 plt.subplot(121)
-plt.tick_params(labelsize=18)
+plt.tick_params(labelsize=22)
 coloridx=0
 for key in temporalutil:
     plt.plot(workload, temporalutil[key], color=memcolors[coloridx], linewidth=2, label=key)
     coloridx=coloridx+1
 plt.semilogx()
-plt.xlabel("Workload",fontsize=22)
-plt.ylabel("Utilization",fontsize=25)
-plt.title("Temporal Utilization per Memory Spec", size=25)
-plt.legend(fontsize=14,ncol=2,frameon=False)
+plt.xlabel("Workload Parallelism $n$",fontsize=24)
+plt.ylabel("Temporal Utilization Rate",fontsize=25)
+plt.title("Temporal Util. vs $n$ and #banks", size=25)
+plt.legend(fontsize=16,ncol=2,frameon=False)
 
 
 plt.subplot(122)
-plt.tick_params(labelsize=18)
+plt.tick_params(labelsize=22)
 coloridx=0
 for key in benchmarktemporalutil:
     plt.plot(workload, benchmarktemporalutil[key], color=colors[coloridx], linewidth=2, label=key)
     coloridx=coloridx+1
 plt.semilogx()
-plt.xlabel("Workload",fontsize=22)
-plt.ylabel("Utilization",fontsize=25)
-plt.title("Temporal Utilization per Benchmark", size=25)
-plt.legend(fontsize=16,ncol=2,frameon=False)
+plt.xlabel("Workload Parallelism $n$",fontsize=24)
+# plt.ylabel("Utilization",fontsize=25)
+plt.title("Temporal Util. per Benchmark", size=25)
+plt.legend(fontsize=18,ncol=2,frameon=False)
 plt.subplots_adjust(wspace=0.15)
-plt.savefig('figures/PIM_temporalutil.pdf')
+plt.savefig('figures/PIM_temporalutil.pdf',bbox_inches='tight')
 
 
 
 plt.figure(figsize=(32,6))
 plt.subplot(141)
-plt.tick_params(labelsize=16)
+plt.tick_params(labelsize=22)
 coloridx=0
 for key in avgspatialutil:
     plt.plot(workload, avgspatialutil[key], color=memcolors[coloridx], linewidth=2, label=key)
     coloridx=coloridx+1
 plt.semilogx()
-plt.xlabel("Workload",fontsize=22)
-plt.ylabel("Utilization",fontsize=24)
-plt.title("Average Spatial Utilization per Memory Spec", size=20)
-plt.legend(fontsize=12,ncol=2,frameon=False)
+plt.xlabel("Workload Parallelism $n$",fontsize=22)
+plt.ylabel("Spatial-Utilization Rate",fontsize=24)
+plt.title("Ave. Spatial Util. w.r.t $n$ and #banks", size=24)
+plt.legend(fontsize=14,ncol=2,frameon=False)
 
 plt.subplot(142)
-plt.tick_params(labelsize=16)
+plt.tick_params(labelsize=22)
 coloridx=0
 for key in maxspatialutil:
     plt.plot(workload, maxspatialutil[key], color=memcolors[coloridx], linewidth=2, label=key)
     coloridx=coloridx+1
 plt.semilogx()
-plt.xlabel("Workload",fontsize=20)
-plt.ylabel("Utilization",fontsize=24)
-plt.title("Peak Spatial Utilization per Memory Spec", size=20)
-plt.legend(fontsize=12,ncol=2,frameon=False)
+plt.xlabel("Workload Parallelism $n$",fontsize=24)
+# plt.ylabel("Utilization",fontsize=24)
+plt.title("Peak Spatial Util. w.r.t $n$ and #banks", size=24)
+plt.legend(fontsize=14,ncol=2,frameon=False)
 
 plt.subplot(143)
-plt.tick_params(labelsize=16)
+plt.tick_params(labelsize=22)
 coloridx=0
 for key in benchmarkavgspatialutil:
     plt.plot(workload, benchmarkavgspatialutil[key], color=colors[coloridx], linewidth=2, label=key)
     coloridx=coloridx+1
 plt.semilogx()
-plt.xlabel("Workload",fontsize=20)
-plt.ylabel("Utilization",fontsize=24)
-plt.title("Average Spatial Utilization per Benchmark", size=20)
-plt.legend(fontsize=11,ncol=2,frameon=False)
+plt.xlabel("Workload Parallelism $n$",fontsize=24)
+# plt.ylabel("Utilization",fontsize=24)
+plt.title("Average Spatial Util. per Benchmark", size=24)
+plt.legend(fontsize=14,ncol=2,frameon=False)
 
 
 plt.subplot(144)
-plt.tick_params(labelsize=16)
+plt.tick_params(labelsize=22)
 coloridx=0
 for key in benchmarkmaxspatialutil:
     plt.plot(workload, benchmarkmaxspatialutil[key], color=colors[coloridx], linewidth=2, label=key)
     coloridx=coloridx+1
 plt.semilogx()
-plt.xlabel("Workload",fontsize=20)
-plt.ylabel("Utilization",fontsize=24)
-plt.title("Peak Spatial Utilization per Benchmark", size=20)
-plt.legend(fontsize=11,ncol=2,frameon=False)
+plt.xlabel("Workload Parallelism $n$",fontsize=20)
+# plt.ylabel("Utilization",fontsize=24)
+plt.title("Peak Spatial Util. per Benchmark", size=24)
+plt.legend(fontsize=14,ncol=2,frameon=False)
 plt.subplots_adjust(wspace=0.19)
-plt.savefig('figures/PIM_spatialutil.pdf')
+plt.savefig('figures/PIM_spatialutil.pdf',bbox_inches='tight')
 
 
 
@@ -348,15 +348,15 @@ plt.tick_params(labelsize=19)
 plt.xticks(xbar+2.5*width,benchmarks)
 plt.bar(xbar, np.array(cpuefficiency), width=width, label="CPU")
 plt.bar(xbar+width, np.array(asicefficiency), width=width, label="ASIC")
-plt.bar(xbar+2*width, np.array(smallsimdsramefficiency), width=width, label="PIM SRAM w/o WRAS")
-plt.bar(xbar+3*width, np.array(smallsramefficiency), width=width, label="PIM SRAM w/ WRAS")
-plt.bar(xbar+4*width, np.array(smallsimdrramefficiency), width=width, label="PIM RRAM w/o WRAS")
-plt.bar(xbar+5*width, np.array(smallrramefficiency), width=width, label="PIM RRAM w/ WRAS")
-plt.title("Efficiency(workload parallism=1024)",fontsize=24)
-plt.ylabel("Efficiency(TOPS/W)",fontsize=24)
+plt.bar(xbar+2*width, np.array(smallsimdsramefficiency), width=width, label="SRAM-PIM w/o WRAS")
+plt.bar(xbar+3*width, np.array(smallsramefficiency), width=width, label="SRAM-PIM w/ WRAS")
+plt.bar(xbar+4*width, np.array(smallsimdrramefficiency), width=width, label="ReRAM-PIM w/o WRAS")
+plt.bar(xbar+5*width, np.array(smallrramefficiency), width=width, label="ReRAM-PIM w/ WRAS")
+plt.title("Efficiency (workload parallism $n=1024$)",fontsize=24)
+plt.ylabel("Efficiency (TOPS/W)",fontsize=24)
 plt.semilogy()
 for tick in ax.get_xticklabels():
-    tick.set_rotation(15)
+    tick.set_rotation(25)
 plt.subplots_adjust(wspace=0.15,hspace=0.3)
 
 ax=plt.subplot(222)
@@ -364,45 +364,45 @@ plt.tick_params(labelsize=19)
 plt.xticks(xbar+2.5*width,benchmarks)
 plt.bar(xbar, np.array(cputhroughput), width=width, label="CPU")
 plt.bar(xbar+width, np.array(asicthroughput), width=width, label="ASIC")
-plt.bar(xbar+2*width, np.array(simdsramthroughput), width=width, label="PIM SRAM w/o WRAS")
-plt.bar(xbar+3*width, np.array(sramthroughput), width=width, label="PIM SRAM w/ WRAS")
-plt.bar(xbar+4*width, np.array(simdrramthroughput), width=width, label="PIM RRAM w/o WRAS")
-plt.bar(xbar+5*width, np.array(rramthroughput), width=width, label="PIM RRAM w/ WRAS")
-plt.title("Throughput(workload parallism=1024)",fontsize=24)
-plt.ylabel("Throughput(TOPS)",fontsize=24)
+plt.bar(xbar+2*width, np.array(smallsimdsramthroughput), width=width, label="SRAM-PIM w/o WRAS")
+plt.bar(xbar+3*width, np.array(smallsramthroughput), width=width, label="SRAM-PIM w/ WRAS")
+plt.bar(xbar+4*width, np.array(smallsimdrramthroughput), width=width, label="ReRAM-PIM w/o WRAS")
+plt.bar(xbar+5*width, np.array(smallrramthroughput), width=width, label="ReRAM-PIM w/ WRAS")
+plt.title("Throughput (workload parallism $n =1024$)",fontsize=24)
+plt.ylabel("Throughput (TOPS)",fontsize=24)
 plt.semilogy()
 for tick in ax.get_xticklabels():
-    tick.set_rotation(15)
+    tick.set_rotation(25)
 
 ax=plt.subplot(223)
 plt.tick_params(labelsize=19)
 plt.xticks(xbar+2.5*width,benchmarks)
 plt.bar(xbar, np.array(cpuefficiency), width=width, label="CPU")
 plt.bar(xbar+width, np.array(asicefficiency), width=width, label="ASIC")
-plt.bar(xbar+2*width, np.array(simdsramefficiency), width=width, label="PIM SRAM w/o WRAS")
-plt.bar(xbar+3*width, np.array(sramefficiency), width=width, label="PIM SRAM w/ WRAS")
-plt.bar(xbar+4*width, np.array(simdrramefficiency), width=width, label="PIM RRAM w/o WRAS")
-plt.bar(xbar+5*width, np.array(rramefficiency), width=width, label="PIM RRAM w/ WRAS")
-plt.title("Efficiency(workload parallism=1048576)",fontsize=24)
-plt.ylabel("Efficiency(TOPS/W)",fontsize=24)
+plt.bar(xbar+2*width, np.array(simdsramefficiency), width=width, label="SRAM-PIM w/o WRAS")
+plt.bar(xbar+3*width, np.array(sramefficiency), width=width, label="SRAM-PIM w/ WRAS")
+plt.bar(xbar+4*width, np.array(simdrramefficiency), width=width, label="ReRAM-PIM w/o WRAS")
+plt.bar(xbar+5*width, np.array(rramefficiency), width=width, label="ReRAM-PIM w/ WRAS")
+plt.title("Efficiency (workload parallism $n= 1048576$)",fontsize=24)
+plt.ylabel("Efficiency (TOPS/W)",fontsize=24)
 plt.semilogy()
 for tick in ax.get_xticklabels():
-    tick.set_rotation(15)
+    tick.set_rotation(25)
 
 ax=plt.subplot(224)
 plt.tick_params(labelsize=19)
 plt.xticks(xbar+2.5*width,benchmarks)
 plt.bar(xbar, np.array(cputhroughput), width=width, label="CPU")
 plt.bar(xbar+width, np.array(asicthroughput), width=width, label="ASIC")
-plt.bar(xbar+2*width, np.array(simdsramthroughput), width=width, label="PIM SRAM w/o WRAS")
-plt.bar(xbar+3*width, np.array(sramthroughput), width=width, label="PIM SRAM w/ WRAS")
-plt.bar(xbar+4*width, np.array(simdrramthroughput), width=width, label="PIM RRAM w/o WRAS")
-plt.bar(xbar+5*width, np.array(rramthroughput), width=width, label="PIM RRAM w/ WRAS")
-plt.title("Throughput(workload parallism=1048576)",fontsize=24)
-plt.ylabel("Throughput(TOPS)",fontsize=24)
+plt.bar(xbar+2*width, np.array(simdsramthroughput), width=width, label="SRAM-PIM w/o WRAS")
+plt.bar(xbar+3*width, np.array(sramthroughput), width=width, label="SRAM-PIM w/ WRAS")
+plt.bar(xbar+4*width, np.array(simdrramthroughput), width=width, label="ReRAM-PIM w/o WRAS")
+plt.bar(xbar+5*width, np.array(rramthroughput), width=width, label="ReRAM-PIM w/ WRAS")
+plt.title("Throughput (workload parallism $n=1048576$)",fontsize=24)
+plt.ylabel("Throughput (TOPS)",fontsize=24)
 plt.semilogy()
 for tick in ax.get_xticklabels():
-    tick.set_rotation(15)
+    tick.set_rotation(25)
 
 
 lines_labels = ax.get_legend_handles_labels()
@@ -410,7 +410,6 @@ lines, labels = [sum(lol, []) for lol in zip(lines_labels)]
 fig.legend(lines, labels,fontsize=20,ncol=6,bbox_to_anchor=(0.5,0.96),loc='upper center',frameon=False)
 
 plt.savefig('figures/PIM_performance_comparison.pdf')
-
 
 print("SRAM 1048576 geomean throughput boost: ",sramthroughput[12]/simdsramthroughput[12])
 print("SRAM 1048576 geomean efficiency boost: ",sramefficiency[12]/simdsramefficiency[12])

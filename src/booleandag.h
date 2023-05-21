@@ -11,6 +11,9 @@
 #include <cstdio>
 #include <vector>
 #include <string>
+#include <queue>
+#include <stack>
+#include <map>
 #include <set>
 #include "memory.h"
 
@@ -63,7 +66,7 @@ private:
     uint inputsize;
     uint outputsize;
     uint size;              ///< length of the vertice list / number of the vertices
-    bigint *prio;              ///< priority list
+    bigint *prio;           ///< priority list (not recommended, )
 
 public:
     /* Constructor & Destructor */
@@ -92,6 +95,11 @@ public:
     Vertice* getvertice(uint id);
     bigint getPriority(uint id);
 
+    int getCriticalPath(std::set<uint> & res);
+    int getMainCluster(std::set<uint> & res, uint depth= 1);
+    
+    // int getCriticalPath(std::vector<uint> &res);
+    // int getCriticalPath(std::set<uint> &res);
 
     void traversePrint();
 };

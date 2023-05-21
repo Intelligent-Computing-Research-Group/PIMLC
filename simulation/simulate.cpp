@@ -4,6 +4,7 @@
 #include "../src/importdag.h"
 #include "../ILP/ILP.h"
 #include <cstdio>
+#include <ctime>
 
 using namespace std;
 
@@ -67,6 +68,9 @@ int main(int argc, char *argv[])
     if (argc < 3) {
         return 0;
     }
+    srand((unsigned)time(NULL));
+    clock_t begintime;
+    begintime = clock();
     const char *inputfile = argv[1];
     uint testnum = atoi(argv[2]);
 
@@ -78,20 +82,25 @@ int main(int argc, char *argv[])
     
     Schedule *sche = new Schedule[searchbound+1];
     double *cost = new double[searchbound+1];
+    clock_t *endtime = new clock_t[searchbound+1];
 
     for (uint i = 0u; i <= searchbound; ++i) {
-        sche[i] = rankuDynamicWeightsSchedule(G, NPOWEROF2(i));
+        sche[i] = rankuCPDynamicWeightsSchedule(G, NPOWEROF2(i));
         cost[i] = sche[i].latency;
+        endtime[i] = clock();
     }
 
     for (uint i = 0; i < testnum; ++i) {
+        clock_t ilpbegintime = clock();
         uint size = atoi(argv[3+i]);
         uint Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
+        uint top = (Bsize < MESHSIZE ? Bsize : MESHSIZE);
         CutSolver *solver = new CutSolver(Bsize, searchbound+1, cost);
 
         bool optimal = solver->isOptimal();
         const double *val = solver->getSolution();
         double res = solver->getObjValue();
+        clock_t ilpendtime = clock();
         // printf("cost: %g %g %g %g %g %g %g\n", cost[0], cost[1], cost[2], cost[3], cost[4], cost[5], cost[6]);
         // printf("Solution res: %g, %g %g %g %g %g %g %g %d\n", res, val[0], val[1], val[2], val[3], val[4], val[5], val[6], optimal ? 1 : 0);
 
@@ -138,7 +147,7 @@ int main(int argc, char *argv[])
         Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
         if (searchbound < LOG2(MESHSIZE)) {
             searchbound = LOG2(MESHSIZE);
-            sche[searchbound] = rankuDynamicWeightsSchedule(G, MESHSIZE);
+            sche[searchbound] = rankuCPDynamicWeightsSchedule(G, MESHSIZE);
             cost[searchbound] = sche[searchbound].latency;
         }
         for (uint j = 0; j < Bsize/MESHSIZE; ++j) {
@@ -167,7 +176,7 @@ int main(int argc, char *argv[])
 #else
         printf("SRAM,");
 #endif
-        printf("%d*4*4*%d*%d,%s,%s,%lf,%lf,%lf,%lf,%lf,%lf,%lld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n", 
+        printf("%d*4*4*%d*%d,%s,%s,%lf,%lf,%lf,%lf,%lf,%lf,%lld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%ld\n", 
             BANKNUM, BLOCKROW, BLOCKCOL, 
             benchmark, argv[3+i], 
             (double)(latency) / 1000.0, energy / 1000.0, 
@@ -177,7 +186,7 @@ int main(int argc, char *argv[])
             efficiency, simdefficiency, 
             temporalutil, simdtemporalutil, 
             maxspatialutil, avgspatialutil, 
-            simdmaxspatialutil, simdavgspatialutil);
+            simdmaxspatialutil, simdavgspatialutil, endtime[LOG2(top)]-begintime+ilpendtime-ilpbegintime);
 
         // printf("%s,%lf,%lf\n",argv[3+i],(double)(latency)/1000.0,oldcost[i]/(double)(latency)*1000.0);
         // printf("final latency: %lld ns, energy: %lf nJ\n", latency / 1000ll, energy / 1000.0);
@@ -188,6 +197,7 @@ int main(int argc, char *argv[])
     delete[] benchmark;
     delete[] cost;
     delete[] sche;
+    delete[] endtime;
     return 0;
 }
 

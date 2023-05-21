@@ -20,5 +20,8 @@ uint placeAtEarlestPE(BooleanDag *G, StageProcessors *P, uint taskid);
 
 StageProcessors* DynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint, uint> &ranklist);
 
+StageProcessors* CPDynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint, uint> &ranklist, std::set<uint> &maincluster);
+
 uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, uint tasksleft);
+uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint> &maincluster, uint taskid, uint tasksleft);
 #endif
