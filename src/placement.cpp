@@ -507,6 +507,17 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
     if (prednum == 0) {
         return pnum;
     }
+    uint pid;   ///< return value
+    /* random start */
+    pid = rand() % pnum;
+    if (P->checkPlaceable(G, pid, taskid)) {
+        P->dynamicWeightsAssignTask(G, taskid, pid);
+        return pid;
+    }
+    else {
+        return UINT_MAX;
+    }
+    /* random end */
 
     if (maincluster.find(taskid) != maincluster.end()) {
         if (P->checkPlaceable(G, pnum-1, taskid)) {
@@ -518,15 +529,7 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
         }
     }
 
-    uint pid;   ///< return value
     double cost = 1e308;
-    static double avgblkcost = 0;
-    static double avgcnt = 0;
-
-    if (P->getTaskNum() == 0) {
-        avgblkcost = OPLATENCY;
-        avgcnt = 0;
-    }
     /**
      * curcost: determine a pe, (check each pred, find best src pe)->map, get blk time, update avg
      * futurecost: check each succ, check their pred pos, calc exp blk time
@@ -548,12 +551,13 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
     // }
     uint maxidx = getMaxidx(midlat, pnum);
     bigint copylat;
-    uint copycnt;
     ///< Try each pe as target
     int placeable = 0;
     bool afterfirstcompensate, compensate_mark;
 
     compensate_mark = false;
+    bigint eft = LONG_LONG_MAX;
+    uint eftcnt = 0;
     for (uint i = 0u; i < pnum; ++i) {
         afterfirstcompensate = false;
         double tmpcost;
@@ -569,10 +573,7 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
         else {
             continue;
         }
-        double curcost, futurecost, stddeviation, maxrow;
-        uint cptime = 0u;
-        curcost = 0;
-        futurecost = 0;
+        double stddeviation, maxrow;
         stddeviation = 0;
         maxrow = 0;
 
@@ -624,8 +625,6 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
 
             ///< need copy(not load) - update current max self blk time
             if (minblkt < BIGINT_MAX) {
-                curcost += minblkt;
-                ++cptime;
                 if (newselfblk) {
                     curmaxpelat += minblkt;
                     newmidlatency[i] = curmaxpelat;
@@ -646,20 +645,6 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
             }
         }
         newmidlatency[i] += OPLATENCY;
-
-        ///< get futurecost - check each pred, find best src pe
-        for (uint j = 0u; j < succnum; ++j) {
-            Vertice *succ = v->successors[j]->dest;
-            uint succid = succ->id;
-            uint succprednum = succ->prednum;
-            for (uint k = 0u; k < succprednum; ++k) {
-                if (succ->predecessors[k]->src->id != taskid) {
-                    if (pe->cache.find(succ->predecessors[k]->src->id) == pe->cache.end()) {
-                        futurecost += avgblkcost;
-                    }
-                }
-            }
-        }
 
         ///< get stddev change
         stddeviation = calculateStandardDeviation(newmidlatency, pnum);
@@ -691,11 +676,16 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
         }
         tmpcost = totalCost(0, 0, stddeviation-curstdDeviation, maxrow, P, tasksleft);
 
+        if (newmidlatency[i] < eft) {
+            eft = newmidlatency[i];
+            eftcnt = 1;
+        }
+        else if (newmidlatency[i] == eft) {
+            eftcnt++;
+        }
         if ((compensate_mark&&(!afterfirstcompensate)) || (afterfirstcompensate&&(tmpcost<cost)) || ((!compensate_mark)&&(tmpcost<cost))) {
             cost = tmpcost;
             pid = i;
-            copylat = curcost;
-            copycnt = cptime;
         }
         // if (pnum == 64) {
         //     printf("%u(%lf,%lf) ",i, stddeviation, maxrow);
@@ -707,11 +697,6 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
     //     printf("\n");
     // }
     if (placeable) {
-        if (copycnt > 0u) {
-            avgblkcost = avgblkcost * avgcnt + copylat;
-            avgcnt += copycnt;
-            avgblkcost /= avgcnt;
-        }
         // printf("assign to %u\n", pid);
         P->dynamicWeightsAssignTask(G, taskid, pid);
     }

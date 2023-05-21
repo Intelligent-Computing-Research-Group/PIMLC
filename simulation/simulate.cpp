@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
     if (argc < 3) {
         return 0;
     }
+    srand((unsigned)time(NULL));
     clock_t begintime;
     begintime = clock();
     const char *inputfile = argv[1];
