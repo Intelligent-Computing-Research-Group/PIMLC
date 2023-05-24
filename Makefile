@@ -1,7 +1,7 @@
 CC      = gcc
 CXX     = g++
 LINK    = g++
-CFLAGS  = -lOsiClp -lCbc -lClp
+CFLAGS  = -lOsiClp -lCbc -lClp -std=c++11
 BIN		= ./bin/
 RM		= rm -rf
 MKDIR	= mkdir

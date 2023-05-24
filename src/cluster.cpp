@@ -56,7 +56,7 @@ void printDAG(BooleanDag *dag)
     return;
 }
 
-int getCriticalPath(BooleanDag *dag, std::vector<uint> &vis)
+int getCriticalPath(BooleanDag *dag, std::vector<uint> &vis, std::vectot<uint> &path)
 {
     int size = dag->getsize();
 
@@ -103,7 +103,8 @@ int getCriticalPath(BooleanDag *dag, std::vector<uint> &vis)
     if (cnt == 1)
     {
         vis[k] = 1;
-        std::cout << dag->getvertice(k)->name << std::endl;
+        path.push_back(k);
+        // std::cout << dag->getvertice(k)->name << std::endl;
         return 1;
     }
 
@@ -198,7 +199,9 @@ int getCriticalPath(BooleanDag *dag, std::vector<uint> &vis)
             if (e == l)
             {
                 found = 1, vis[k] = 1, vis[v] = 1, cnt += 2;
-                std::cout << now->name << " " << dag->getvertice(v)->name << " ";
+                path.push_back(k);
+                path.push_back(v);
+                // std::cout << now->name << " " << dag->getvertice(v)->name << " ";
                 k = v;
                 break;
             }
@@ -221,7 +224,8 @@ int getCriticalPath(BooleanDag *dag, std::vector<uint> &vis)
             if (e == l)
             {
                 found = 1, vis[v] = 1, cnt++;
-                std::cout << dag->getvertice(v)->name << " ";
+                path.push_back(v);
+                // std::cout << dag->getvertice(v)->name << " ";
                 k = v;
                 break;
             }
@@ -236,14 +240,15 @@ int getCriticalPath(BooleanDag *dag, std::vector<uint> &vis)
 }
 
 // overload for non-iter use
-void getCriticalPath(BooleanDag *dag)
+void getCriticalPath(BooleanDag *dag, std::vector<uint> &path)
 {
     int size = dag->getsize();
 
     // if there is only one node, output it
     if (size == 1)
     {
-        std::cout << dag->getvertice(0)->name << std::endl;
+        path.push_back(0);
+        // std::cout << dag->getvertice(0)->name << std::endl;
         return;
     }
     std::vector<int> vis(size, 0);
@@ -320,7 +325,9 @@ void getCriticalPath(BooleanDag *dag)
             if (e == l)
             {
                 found = 1, vis[k] = 1, vis[v] = 1;
-                std::cout << now->name << " " << dag->getvertice(v)->name << " ";
+                path.push_back(k);
+                path.push_back(v);
+                // std::cout << now->name << " " << dag->getvertice(v)->name << " ";
                 k = v;
                 break;
             }
@@ -343,7 +350,8 @@ void getCriticalPath(BooleanDag *dag)
             if (e == l)
             {
                 found = 1, vis[v] = 1;
-                std::cout << dag->getvertice(v)->name << " ";
+                path.push_back(v);
+                // std::cout << dag->getvertice(v)->name << " ";
                 k = v;
                 break;
             }
@@ -353,7 +361,7 @@ void getCriticalPath(BooleanDag *dag)
     return;
 }
 
-void linearClustering(BooleanDag *dag)
+void linearClustering(BooleanDag *dag, std::vector<std::vector<uint>> &clusters)
 {
     int size = dag->getsize();
     std::vector<uint> vis(size, 0);
@@ -362,11 +370,226 @@ void linearClustering(BooleanDag *dag)
     // std::cout << cnt << std::endl;
     while (cnt < size)
     {
-        int k = getCriticalPath(dag, vis);
+        std::vector<uint> path;
+        int k = getCriticalPath(dag, vis, path);
         cnt += k;
         if (k == 0)
             break;
+        else
+            clusters.push_back(path);
         // std::cout << cnt << std::endl;
     }
     return;
+}
+
+bigint getLatency(BooleanDag *dag, std::vector<uint> &path)
+{
+    bigint latency = 0;
+    for (uint i = 0; i < path.size() - 1; i++)
+    {
+        Vertice *now = dag->getvertice(path[i]);
+        for (uint j = 0; j < now->succnum; j++)
+        {
+            if (now->successors[j]->dest->id == path[i + 1])
+            {
+                latency += now->successors[j]->weight;
+                break;
+            }
+        }
+    }
+    return latency;
+}
+
+uint placeAtEarleast(BooleanDag *dag, StageProcessors *P, uint taskid)
+{
+    uint pid;
+    bigint est = INT_MAX;
+    uint pnum = P->getpnum();
+    uint predum;
+    ProcessElem *pe;
+    Vertice *v = G->getvertice(taskid);
+    predum = v->prednum;
+    // ?
+    // if the task has no predecessors, then it can be placed at any processor
+    if (predum == 0)
+        return pnum;
+
+    uint *predpeid = new uint[predum];
+    bigint *predfinishtime = new bigint[predum];
+    bigint *predcommcost = new bigint[predum];
+
+    // ？
+    // get the finish time of predecessors in order to test?
+    for (uint i = 0u; i < predum; i++)
+    {
+        Edge *e = v->predecessors[i];
+        uint predid = e->src->id;
+        Assignment *predassignment = P->getAssignmentByTask(predid);
+
+        if (predassignment)
+        {
+            predpeid[i] = predassignment->pid;
+            predfinishtime[i] = predassignment->finishtime;
+            predcommcost[i] = e->weight;
+        }
+        else
+        {
+            if (P->prior)
+                predassignment = P->prior->getAssignmentByTask(predid);
+            if (predassignment && P->prior->getLine(predid) >= P->getOverwritepos(predassignment->pid))
+                predpeid[i] = predassignment->pid;
+            else
+                predpeid[i] = pnum;
+
+            predfinishtime[i] = 0;
+            predcommcost[i] = e->weight;
+        }
+    }
+
+    // try each pe as target
+    int placeable = 0;
+    for (uint i = 0u; i < pnum; i++)
+    {
+        pe = P->getpe(i);
+        if (P->checkPlaceable(G, i, taskid))
+            placeable = 1;
+        else
+            continue;
+        bigint avail = pe->opeft;
+        for (uint j = 0u; j < prednum; j++)
+        {
+            bigint predt = predfinishtime[j] + (CommWeight(getCommLevel(pnum, i, predpeid[j])));
+            avail = avail > predt ? avail : predt;
+        }
+        if (avail < est)
+        {
+            est = avail;
+            pid = i;
+        }
+    }
+    if (placeable)
+        P->assignTask(G, taskid, pid, est, est + v->weight);
+    else
+        return UINT_MAX;
+    return pid;
+}
+
+Schedule clusterScheduling(BooleanDag *dag, std::vector<std::vector<uint>> &clusters, int workload)
+{
+    // init
+    Schedule sche;
+    sche.chunksize = workload;
+    int pnum = MESHSIZE / workload;
+    if (pnum <= 0)
+        exit(-1);
+    bigint totalms = 0;
+
+    // get clusters
+    std::vector<std::vector<uint>> clusters;
+    linearClustering(dag, clusters);
+
+    // calc latency
+    std::vector<bigint> latencies(clusters.size()) for (uint i = 0; i < clusters.size(); i++)
+        latencies[i] = getLatency(dag, clusters[i]);
+
+    // sort clusters by latency in descending order
+    auto _cmp = [](std::pair<bigint, uint> a, std::pair<bigint, uint> b)
+    { return a.first > b.first; };
+    std::priority_queue<std::pair<bigint, uint>, std::vector<std::pair<bigint, uint>>, decltype(_cmp)> q(_cmp);
+    for (uint i = 0; i < clusters.size(); i++)
+        q.push(std::make_pair(latencies[i], i));
+    // place lace clusters in decending order of latency
+    // how?
+
+    // clusters vector2set for fast search
+    std::vector<std::set<uint>> clusters_set(clusters.size());
+    for (uint i = 0; i < clusters.size(); i++)
+        for (uint j = 0; j < clusters[i].size(); j++)
+            clusters_set[i].insert(clusters[i][j]);
+
+    // task placement, tasks in the same cluster are placed in the same PE
+
+    StageProcessors *stages = NULL;
+    StageProcessors *prior = NULL;
+    StageProcessors **p = &stages;
+    (*p)->init(pnum);
+    uint stagecnt = 0;
+
+    int size = dag->getsize();
+    std::vector<uint> cluster2pe(clusters.size(), -1);
+    std::vector<int> indegree(size, 0);
+    std::queue<uint> q;
+
+    bool *assigned = new bool[size];
+    for (uint i = 0; i < size; i++)
+        assigned[i] = false;
+
+    // place "free" tasks
+    for (uint i = 0; i < size; i++)
+    {
+        Vertice *now = dag->getvertice(i);
+        indegree[i] = now->prednum;
+        if (indegree[i] == 0)
+            q.push(i);
+    }
+    while (!q.empty())
+    {
+        uint u = q.front();
+        q.pop();
+
+        for (uint i = 0; i < dag->getvertice(u)->succnum; i++)
+        {
+            uint v = dag->getvertice(u)->successors[i]->dest->id;
+            indegree[v]--;
+            if (indegree[v] == 0)
+                q.push(v);
+        }
+        // if the node is in a cluster already placed in a pe, place it in the same pe
+        if (cluster2pe[u] != -1)
+        {
+            int pnow = cluster2pe[u];
+            // calc est
+
+            prior = *p;
+            p = &((*p)->next);
+        }
+        else
+        {
+            // if not, place it in the pe with the earliest available time
+            int pid = placeAtEarleast(G, *p, taskid);
+            if (pid != UINT_MAX)
+            {
+                assigned[taskid] = true;
+                (*p)->releaseMem(G, taskid, assigned);
+                // tag all tasks in the same cluster
+                for (int i = 0; i < clusters.size(); i++)
+                    if (clusters_set[i].find(u) != clusters_set[i].end())
+                    {
+                        for (auto it : clusters_set[i])
+                            cluster2pe[it] = pid;
+                        break;
+                    }
+                (*p)->assignFinish();
+            }
+            prior = *p;
+            p = &((*p)->next);
+        }
+    }
+    sche.p = stages;
+    sche.latency = 0;
+    sche.oplatency = 0;
+    sche.energy = 0;
+    while (stages)
+    {
+        stages->calcEnergy();
+        sche.latency += stages->getLatency();
+        sche.oplatency += stages->getOPLatency();
+        sche.energy += stages->getEnergy();
+
+        stages = stages->next;
+    }
+    // stages->printScheduleByTasks();
+    // stages->printScheduleByPEs();
+
+    return sche;
 }
