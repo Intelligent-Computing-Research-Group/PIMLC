@@ -13,10 +13,9 @@
 #include <set>
 
 void printDAG(BooleanDag *dag);
-int getCriticalPath(BooleanDag *dag, std::vector<uint> &vis, std::vector<uint> &path);
-void getCriticalPath(BooleanDag *dag, std::vector<uint> &path);
+int getCriticalPath(BooleanDag *dag, std::vector<uint> &vis, std::set<uint> &path);
 void linearClustering(BooleanDag *dag, std::vector<std::vector<uint>> &clusters);
-bigintg getLatency(BooleanDag *dag, std::vector<uint> &path);
-void clusterScheduling(BooleanDag *dag, std::vector<std::vector<uint>> &clusters, int workload);
+bigint getLatency(BooleanDag *dag, std::set<uint> &path);
+Schedule clusterScheduling(BooleanDag *dag, int workload);
 
 #endif
