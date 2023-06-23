@@ -12,10 +12,22 @@
 #include "booleandag.h"
 #include "procelem.h"
 
+/**
+ * @brief int getCommLevel
+ * @details whether the two processors are in the same mat, in the same bank, cross-bank or any other levels
+ */
 int getCommLevel(uint totalpnum, uint p1, uint p2);
 
 StageProcessors* HEFT(BooleanDag *G, int pnum, std::multimap<bigint, uint> &ranklist);
 
+/**
+ * @brief uint placeAtEarlestPE
+ * @details place specific task to the processor with est
+ * @retval [0,pnum-1] - The target task
+ * @retval pnum - this is a source node and will not be assigned in the future (when assigning its succs)
+ * @retval UINT_MAX - this stage will no longer provide a proper target, should start another stage
+ * @retval othervalues - unexpected return values
+ */
 uint placeAtEarlestPE(BooleanDag *G, StageProcessors *P, uint taskid);
 
 StageProcessors* DynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint, uint> &ranklist);

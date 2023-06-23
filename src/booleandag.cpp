@@ -101,6 +101,7 @@ int BooleanDag::destroy()
 {
     if (size > 0) {
         delete[] V;
+        E.clear();
         delete[] prio;
     }
     return 1;

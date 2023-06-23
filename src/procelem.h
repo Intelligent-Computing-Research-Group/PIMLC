@@ -67,7 +67,7 @@ public:
     ~StageProcessors();
 
     /* Construction related */
-    int init(uint n);  // unlimited memory for DAG with certain number of tasks
+    int init(uint n);  ///< unlimited memory for DAG with certain number of tasks
     int clean();
 
     /* TaskAssignment */
@@ -125,6 +125,8 @@ public:
     uint getLine(uint taskid);
     uint const& getOverwritepos(uint peid) const;
     Assignment* getAssignmentByTask(uint taskid);
+
+    /// @brief a normal statistic function
     void getTime2SpatialUtil(std::map<bigint, uint> &res, bigint offset = 0);
 
     /* Printers */
