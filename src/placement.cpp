@@ -100,6 +100,14 @@ StageProcessors* HEFT(BooleanDag *G, int pnum, std::multimap<bigint, uint> &rank
     delete[] assigned;
     return stages;
 }
+/**
+ * @brief uint placeAtEarlestPE
+ * @details place specific task to the processor with est
+ * @retval [0,pnum-1] - The target task
+ * @retval pnum - this is a source node and will not be assigned in the future (when assigning its succs)
+ * @retval UINT_MAX - this stage will no longer provide a proper target, should start another stage
+ * @retval othervalues - unexpected return values
+ */
 
 uint placeAtEarlestPE(BooleanDag *G, StageProcessors *P, uint taskid)
 {
@@ -111,7 +119,7 @@ uint placeAtEarlestPE(BooleanDag *G, StageProcessors *P, uint taskid)
     Vertice *v = G->getvertice(taskid);
     prednum = v->prednum;
     if (prednum == 0) {
-        return pnum;
+        return pnum;    // if this node is a source node, return pnum
     }
 
     uint *predpeid = new uint[prednum];
