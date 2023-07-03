@@ -22,9 +22,10 @@ memcolors = ["#F2D4C9", "#DF8D8F", "#BF8A7E", "#F20505",
              "#A60303", "#D1E1E9", "#A6BACC", "#7A96AB", "#526F84", "#3E3540"]
 benchmarks = ["adder", "cavlc", "dec", "div", "int2float", "log2",
               "max", "multiplier", "priority", "router", "sin", "sqrt"]
-workload = [1, 4, 16, 128, 256, 512, 800, 1000, 1024, 2048, 4096, 8192, 10000, 12000,
-            16384, 24000, 32768, 36789, 51200, 65536, 80000, 102400, 160000, 200000, 1000000]
+workload = [1, 4, 16, 256, 800, 1024, 2048, 8192, 12000,
+            16384, 51200, 65536, 102400, 200000, 524288]
 memorysize = ['1*4*4*256*256', '2*4*4*256*256', '4*4*4*256*256', '8*4*4*256*256', '16*4*4*256*256']
+banknum = [1, 2, 4, 8, 16]
 
 # read data
 csvdata = dict()
@@ -32,7 +33,7 @@ csvdata['RD'] = pd.read_csv('RD202305182036.csv')
 csvdata['HEFT'] = pd.read_csv('HEFT202305162217.csv')
 csvdata['CP'] = pd.read_csv('CP202305170042.csv')
 
-fig = plt.figure(figsize=(30, 12))
+fig = plt.figure(figsize=(38, 10))
 
 # plot workload
 workload_RD = []
@@ -58,19 +59,21 @@ for i in range(len(workload)):
     workloadspeedup_CP.append(workload_RD[i] / workload_CP[i])
 
 xbar = np.arange(len(workload))
-total_width, n = 0.8, 3
+total_width, n = 0.8, 2
 width = total_width / n
 xbar = xbar - (total_width - width) / 2
-ax = plt.subplot(211)
+ax = plt.subplot(131)
 
 plt.tick_params(labelsize=19)
-plt.xticks(xbar+width, workload, fontsize=14)
+plt.xticks(xbar+1.5*width, workload, fontsize=14)
 ax.set_ylim(0.6, 1.7)
-plt.bar(xbar, np.array(workloadspeedup_RD), width=width, label='RD')
+# plt.bar(xbar, np.array(workloadspeedup_RD), width=width, label='RD')
 plt.bar(xbar+width, np.array(workloadspeedup_HEFT), width=width, label='HEFT')
-plt.bar(xbar+2*width, np.array(workloadspeedup_CP), width=width, label='CP')
-plt.title("workload speedup", fontsize=24)
-plt.ylabel("speedup", fontsize=24)
+plt.bar(xbar+2*width, np.array(workloadspeedup_CP), width=width, label='LBCP')
+plt.title("Speedup w.r.t different workload parallelism", fontsize=24)
+plt.xlabel("workload parallelism $n$", fontsize=24)
+plt.ylabel("speedup", fontsize=25)
+
 # plt.semilogy()
 for tick in ax.get_xticklabels():
     tick.set_rotation(45)
@@ -99,23 +102,24 @@ for i in range(len(benchmarks)):
     benchmarkspeedup_CP.append(benchmark_RD[i] / benchmark_CP[i])
 
 xbar = np.arange(len(benchmarks))
-total_width, n = 0.8, 3
+total_width, n = 0.8, 2
 width = total_width / n
 xbar = xbar - (total_width - width) / 2
-ax = plt.subplot(223)
+ax = plt.subplot(132)
 
 plt.tick_params(labelsize=19)
-plt.xticks(xbar+width, benchmarks, fontsize=14)
-plt.bar(xbar, np.array(benchmarkspeedup_RD), width=width, label='RD')
+plt.xticks(xbar+1.5*width, benchmarks, fontsize=16)
+# plt.bar(xbar, np.array(benchmarkspeedup_RD), width=width, label='RD')
 plt.bar(xbar+width, np.array(benchmarkspeedup_HEFT),
         width=width, label='HEFT')
-plt.bar(xbar+2*width, np.array(benchmarkspeedup_CP), width=width, label='CP')
-plt.title("benchmark speedup", fontsize=24)
-plt.ylabel("speedup", fontsize=24)
+plt.bar(xbar+2*width, np.array(benchmarkspeedup_CP), width=width, label='LBCP')
+plt.title("Speedup w.r.t different benchmarks", fontsize=24)
+plt.xlabel("benchmark", fontsize=25)
+plt.ylabel("speedup", fontsize=25)
 # plt.semilogy()
 for tick in ax.get_xticklabels():
     tick.set_rotation(15)
-plt.subplots_adjust(wspace=0.15, hspace=0.5)
+plt.subplots_adjust(wspace=0.15, hspace=0.4)
 
 # plot memorysize
 
@@ -141,30 +145,31 @@ for i in range(len(memorysize)):
     memorysizespeedup_CP.append(memorysize_RD[i] / memorysize_CP[i])
 
 xbar = np.arange(len(memorysize))
-total_width, n = 0.8, 3
+total_width, n = 0.8, 2
 width = total_width / n
 xbar = xbar - (total_width - width) / 2
-ax = plt.subplot(224)
+ax = plt.subplot(133)
 
 plt.tick_params(labelsize=19)
-plt.xticks(xbar+width, memorysize, fontsize=14)
+plt.xticks(xbar+1.5*width, banknum, fontsize=25)
 ax.set_ylim(0.6, 1.4)
-plt.bar(xbar, np.array(memorysizespeedup_RD), width=width, label='RD')
+# plt.bar(xbar, np.array(memorysizespeedup_RD), width=width, label='RD')
 plt.bar(xbar+width, np.array(memorysizespeedup_HEFT),
         width=width, label='HEFT')
-plt.bar(xbar+2*width, np.array(memorysizespeedup_CP), width=width, label='CP')
-plt.title("memorysize speedup", fontsize=24)
-plt.ylabel("speedup", fontsize=24)
+plt.bar(xbar+2*width, np.array(memorysizespeedup_CP), width=width, label='LBCP')
+plt.title("Speedup w.r.t different memory size", fontsize=24)
+plt.xlabel("bank number", fontsize=25)
+plt.ylabel("speedup", fontsize=25)
 # plt.semilogy()
-for tick in ax.get_xticklabels():
-    tick.set_rotation(15)
-plt.subplots_adjust(wspace=0.15, hspace=0.5)
+# for tick in ax.get_xticklabels():
+#     tick.set_rotation(15)
+plt.subplots_adjust(bottom=0.25, top=0.75, wspace=0.15, hspace=0.5)
 
 
 lines_labels = ax.get_legend_handles_labels()
 lines, labels = [sum(lol, []) for lol in zip(lines_labels)]
-fig.legend(lines, labels, fontsize=20, ncol=6, bbox_to_anchor=(
-    0.5, 0.96), loc='upper center', frameon=False)
+fig.legend(lines, labels, fontsize=24, ncol=6, bbox_to_anchor=(
+    0.5, 0.85), loc='upper center', frameon=False)
 
 
 plt.savefig('figures/PIM_schedulecomp.pdf')
