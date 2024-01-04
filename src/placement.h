@@ -1,7 +1,7 @@
 /**  
  * @file    placement.h
  * @brief   Task placement strategy
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 2.0
  * @date    2022-11-09
  * @note    

@@ -1,7 +1,7 @@
 /**  
  * @file    memory.h
  * @brief   #define basic information of memory limitation
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 2.4
  * @date    2022-11-20
  * @note    

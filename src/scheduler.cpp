@@ -1,7 +1,7 @@
 /**  
  * @file    scheduler.cpp
  * @brief   Schedule the whole DAG and map it to HW
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 4.0
  * @date    2023-02-09
  * @note    

@@ -1,7 +1,7 @@
 /**  
  * @file    booleandag.h
  * @brief   Basic implementation of boolean dag
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 3.0
  * @date    2023-02-09
  * @note    

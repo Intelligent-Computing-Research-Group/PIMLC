@@ -1,7 +1,7 @@
 /**  
  * @file    priority.cpp
  * @brief   Compute the priority of each vertice in a DAG
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 4.0
  * @date    2022-10-17
  * @note    
