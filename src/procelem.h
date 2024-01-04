@@ -1,7 +1,7 @@
 /**  
  * @file    procelem.h
  * @brief   Processing Element Definition
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 2.3
  * @date    2022-11-18
  * @note    

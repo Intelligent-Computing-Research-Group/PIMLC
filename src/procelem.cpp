@@ -1,7 +1,7 @@
 /**  
  * @file    procelem.cpp
  * @brief   Processing Element Implementation
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 4.0
  * @date    2022-02-09
  * @note    
