@@ -1,8 +1,8 @@
-workload=(1 256 4096 200000)
+workload=(1 1048576)
 benchmark=(adder cavlc dec div int2float log2 sin)
 baknums=(4)
 algorithm=(HEFT LBCP)
-type=(SRAM)
+type=(SRAM ReRAM)
 
 rm -rf trace
 mkdir -p trace bin

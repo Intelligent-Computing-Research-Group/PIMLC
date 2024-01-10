@@ -21,7 +21,7 @@
 typedef unsigned int uint;
 typedef long long bigint;
 
-#ifdef RRAM
+#ifdef ReRAM
 // ./nvsim 65 0 512 256 2 2 1 1 2 2 1 1 0
 #define MESHSIZE    (16*BANKNUM)     ///< number of mesh
 #define BLOCKROW    256   ///< number of rows in a block - NWL

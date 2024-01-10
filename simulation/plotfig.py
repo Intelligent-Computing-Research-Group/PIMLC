@@ -422,5 +422,5 @@ print("ReRAM 1024 geomean efficiency boost: ",smallrramefficiency[12]/smallsimdr
 
 
 print("16 banks SRAM speedup: ",speedup["SRAM#16"][1])
-print("16 banks RRAM speedup: ",speedup["RRAM#16"][1])
+print("16 banks ReRAM speedup: ",speedup["ReRAM#16"][1])
 

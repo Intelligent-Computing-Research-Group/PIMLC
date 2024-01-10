@@ -171,8 +171,8 @@ int main(int argc, char *argv[])
         simdmaxspatialutil = maxutil(simdspatialutil);
         simdavgspatialutil = avgutil(simdspatialutil);
 
-#ifdef RRAM
-        printf("RRAM,");
+#ifdef ReRAM
+        printf("ReRAM,");
 #else
         printf("SRAM,");
 #endif
