@@ -154,7 +154,6 @@ BooleanDag *v2booleandag(const std::string &filename)
 
         // case 2: 2-input gate
         else if (num_operands == 1) {
-            std::string node_shape = "circle";
             temp = rhs.find_first_not_of(' ');
             while (rhs[temp] != ' ') {
                 operand[0].name += rhs[temp];

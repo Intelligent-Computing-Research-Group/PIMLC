@@ -37,8 +37,8 @@ typedef struct _PE {
     bigint opeft;            ///< earlist finish time
     std::map<uint, uint> cache;     ///< <taskid, index> record cached id of nodes
     uint line[BLOCKROW];            ///< index -> taskid
-    uint smallestfreeidx;
-    uint overwriteflag;
+    uint smallestfreeidx;   ///< a flag record the smallest free index that starts at 0 and grows monotonically
+    uint overwriteflag;     ///< a flag record the smallest index that we can overwrite
     _PE() : id(0), opeft(0), smallestfreeidx(0), overwriteflag(0) {for(uint i=0;i<BLOCKROW;++i)line[i]=UINT_MAX;};
 } ProcessElem;
 
@@ -55,9 +55,9 @@ class StageProcessors {
     double *loadenergy;     ///< the load energy of each PE
     double *midenergy;      ///< the operation+copy energy of each PE
     double *storeenergy;    ///< the store energy of each PE
-    std::map<uint, InstructionNameSpace::Instruction> loadinstlist;
+    std::multimap<uint, InstructionNameSpace::Instruction> loadinstlist;
     std::deque<InstructionNameSpace::Instruction> instlist;    ///< instruction lists
-    std::map<uint, InstructionNameSpace::Instruction> storeinstlist;
+    std::multimap<uint, InstructionNameSpace::Instruction> storeinstlist;
 
 public:
     StageProcessors *next;  ///< next stage
