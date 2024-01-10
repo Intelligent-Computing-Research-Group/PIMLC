@@ -5,6 +5,7 @@
 #include "./ILP/ILP.h"
 #include <cstdio>
 #include <ctime>
+#include <string>
 
 using namespace std;
 
@@ -17,8 +18,12 @@ using namespace std;
  */
 int main(int argc, char *argv[])
 {
+    string algorithm = "LBCP";  // defalt: LBCP
     if (argc < 3) {
         return 0;
+    }
+    if (argc >= 4) {
+        algorithm = argv[3];
     }
     clock_t begintime;
     begintime = clock();
@@ -37,7 +42,15 @@ int main(int argc, char *argv[])
     double *cost = new double[LOG2(MESHSIZE)+1];
 
     for (uint i = 0u; i <= searchbound; ++i) {
-        sche[i] = rankuDynamicWeightsSchedule(G, NPOWEROF2(i));
+        if (algorithm == "HEFT") {
+            sche[i] = rankuHEFTSchedule(G, NPOWEROF2(i));
+        }
+        else if (algorithm == "DW") {
+            sche[i] = rankuDynamicWeightsSchedule(G, NPOWEROF2(i));
+        }
+        else {
+            sche[i] = rankuCPDynamicWeightsSchedule(G, NPOWEROF2(i));
+        }
         cost[i] = sche[i].latency;
     }
 
