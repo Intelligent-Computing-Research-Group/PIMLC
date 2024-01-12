@@ -21,7 +21,7 @@ Schedule rankuHEFTSchedule(BooleanDag *G, uint workload)
     Schedule sche;
     sche.chunksize = workload;
     bigint *priority;
-    int pnum = pimcfg.getBlockNums() / workload;
+    int pnum = pcfg.block_nums / workload;
     bigint totalms = 0;
     if (pnum <= 0) {
         exit(-1);
@@ -65,7 +65,7 @@ Schedule rankuDynamicWeightsSchedule(BooleanDag *G, uint workload)
     Schedule sche;
     sche.chunksize = workload;
     bigint *priority;
-    int pnum = pimcfg.getBlockNums() / workload;
+    int pnum = pcfg.block_nums / workload;
     bigint totalms = 0;
     if (pnum <= 0) {
         exit(-1);
@@ -108,7 +108,7 @@ Schedule rankuCPDynamicWeightsSchedule(BooleanDag *G, uint workload)
     Schedule sche;
     sche.chunksize = workload;
     bigint *priority;
-    int pnum = pimcfg.getBlockNums() / workload;
+    int pnum = pcfg.block_nums / workload;
     bigint totalms = 0;
     if (pnum <= 0) {
         exit(-1);
@@ -117,7 +117,7 @@ Schedule rankuCPDynamicWeightsSchedule(BooleanDag *G, uint workload)
 
     // priority - ranku
     std::set<uint> maincluster;
-    G->getMainCluster(maincluster, pimcfg.getCommWeight(pimcfg.getLevels())*2 / pimcfg.getComputeLatency());
+    G->getMainCluster(maincluster, pcfg.commWeight[pcfg.levels]*2 / pcfg.compute_latency);
     priority = Priority::ranku(G);
     G->setPriority(priority);
     std::multimap<bigint, uint> ranklist;   ///< <rank, taskid>

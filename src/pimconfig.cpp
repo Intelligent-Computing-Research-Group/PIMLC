@@ -7,7 +7,7 @@
 
 using namespace std;
 
-PIMConf &pimcfg = PIMConf::getInstance();
+PIMConf &pcfg = PIMConf::getInstance();
 
 void PIMConf::setGlobalPIMConf(const char *configfile)
 {
@@ -43,7 +43,7 @@ void PIMConf::setGlobalPIMConf(const char *configfile)
     for (int i = 0; i < ins._levels; ++i) {
         ins._block_nums *= ins._level_size[i];
         ins._block_cols *= i<=ins._schedule_level ? ins._level_size[i] : 1;
-        ins._maxCopyThread[i] = i==0 ? ins.getBlockNums()/ins._level_size[i] : ins._maxCopyThread[i-1]/ins._level_size[i];
+        ins._maxCopyThread[i] = i==0 ? ins.block_nums/ins._level_size[i] : ins._maxCopyThread[i-1]/ins._level_size[i];
         ins._commWeight[i] = ins._read_latency[i] + ins._write_latency[i];
     }
     ins._commWeight[ins._levels] = ins._load_latency + ins._store_latency;

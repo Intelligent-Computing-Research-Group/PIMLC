@@ -165,7 +165,7 @@ uint placeAtEarlestPE(BooleanDag *G, StageProcessors *P, uint taskid)
         }
         bigint avail = pe->opeft;
         for (uint j = 0u; j < prednum; ++j) {
-            bigint predt = predfinishtime[j] + (pimcfg.getCommWeight(getCommLevel(pnum, i, predpeid[j])));
+            bigint predt = predfinishtime[j] + (pcfg.commWeight[getCommLevel(pnum, i, predpeid[j])]);
             avail = avail > predt ? avail : predt;
         }
         if (avail < est) {
@@ -290,7 +290,7 @@ double totalCost(double curcost, double futurecost, double stddeviation, double 
     uint pnum = P->getpnum();
     for (uint i = 0u; i < pnum; ++i) {
         double len = P->getPE(i)->cache.size();
-        double temp = len / pimcfg.getBlockRows();
+        double temp = len / pcfg.block_rows;
         pct = temp > pct ? temp : pct;
     }
     uint tasknum = P->getTaskNum();
@@ -334,8 +334,8 @@ uint getMaxidx(bigint *arr, uint n)
 
 uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, uint tasksleft)
 {
-    static uint blocknums = pimcfg.getBlockNums();
-    static bigint oplatency = pimcfg.getComputeLatency();
+    static uint blocknums = pcfg.block_nums;
+    static bigint oplatency = pcfg.compute_latency;
     Vertice *v = G->getvertice(taskid);
     uint pnum = P->getpnum();
     uint prednum = v->prednum;
@@ -446,16 +446,16 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
                     newmidlatency[i] = curmaxpelat;
                     if (srcpeid == maxidx) {
                         uint level = getCommLevel(pnum, i, srcpeid);
-                        uint maxthreads = pimcfg.getCopyThreads(level) > threads ? threads : pimcfg.getCopyThreads(level);
-                        cplat += pimcfg.getCommWeight(level) * (threads / maxthreads);
+                        uint maxthreads = pcfg.maxCopyThread[level] > threads ? threads : pcfg.maxCopyThread[level];
+                        cplat += pcfg.commWeight[level] * (threads / maxthreads);
                     }
                 }
                 else {
                     newmidlatency[srcpeid] = midlat[i];
                     if (i == maxidx) {
                         uint level = getCommLevel(pnum, i, srcpeid);
-                        uint maxthreads = pimcfg.getCopyThreads(level) > threads ? threads : pimcfg.getCopyThreads(level);
-                        cplat += pimcfg.getCommWeight(level) * (threads / maxthreads);
+                        uint maxthreads = pcfg.maxCopyThread[level] > threads ? threads : pcfg.maxCopyThread[level];
+                        cplat += pcfg.commWeight[level] * (threads / maxthreads);
                     }
                 }
             }
@@ -511,8 +511,8 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
 
 uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint> &maincluster, uint taskid, uint tasksleft)
 {
-    static uint blocknums = pimcfg.getBlockNums();
-    static bigint oplatency = pimcfg.getComputeLatency();
+    static uint blocknums = pcfg.block_nums;
+    static bigint oplatency = pcfg.compute_latency;
     Vertice *v = G->getvertice(taskid);
     uint pnum = P->getpnum();
     uint prednum = v->prednum;
@@ -642,16 +642,16 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
                     newmidlatency[i] = curmaxpelat;
                     if (srcpeid == pnum-1) {
                         uint level = getCommLevel(pnum, i, srcpeid);
-                        uint maxthreads = pimcfg.getCopyThreads(level) > threads ? threads : pimcfg.getCopyThreads(level);
-                        cplat += pimcfg.getCommWeight(level) * (threads / maxthreads);
+                        uint maxthreads = pcfg.maxCopyThread[level] > threads ? threads : pcfg.maxCopyThread[level];
+                        cplat += pcfg.commWeight[level] * (threads / maxthreads);
                     }
                 }
                 else {
                     newmidlatency[srcpeid] = curmaxpelat;
                     if (i == pnum-1) {
                         uint level = getCommLevel(pnum, i, srcpeid);
-                        uint maxthreads = pimcfg.getCopyThreads(level) > threads ? threads : pimcfg.getCopyThreads(level);
-                        cplat += pimcfg.getCommWeight(level) * (threads / maxthreads);
+                        uint maxthreads = pcfg.maxCopyThread[level] > threads ? threads : pcfg.maxCopyThread[level];
+                        cplat += pcfg.commWeight[level] * (threads / maxthreads);
                     }
                 }
             }

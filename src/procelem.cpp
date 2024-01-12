@@ -13,13 +13,13 @@
 
 inline uint meshaddr(uint k, uint row)
 {
-    return (k*pimcfg.getBlockRows()+row);
+    return (k*pcfg.block_rows+row);
 }
 
 _PE::_PE() : id(0), opeft(0), smallestfreeidx(0), overwriteflag(0)
 {
-    line=new uint[pimcfg.getBlockRows()];
-    for(uint i=0;i<pimcfg.getBlockRows();++i)line[i]=UINT_MAX;
+    line=new uint[pcfg.block_rows];
+    for(uint i=0;i<pcfg.block_rows;++i)line[i]=UINT_MAX;
 };
 
 
@@ -189,7 +189,7 @@ int StageProcessors::checkPlaceable(BooleanDag *G, uint peid, uint taskid)
             load++;
         }
     }
-    if (pe->overwriteflag + load > pimcfg.getBlockRows() || pe->cache.size() + copy + load + 1 > pimcfg.getBlockRows()) {
+    if (pe->overwriteflag + load > pcfg.block_rows || pe->cache.size() + copy + load + 1 > pcfg.block_rows) {
         return 0;
     }
     return 1;
@@ -251,7 +251,7 @@ int StageProcessors::assignTask(BooleanDag* G, uint taskid, uint PEid, bigint st
                 copyinst.src[0] = meshaddr(srcpeid, srcidx);
 
                 instlist.push_back(copyinst);
-                while (++(pe->smallestfreeidx) < pimcfg.getBlockRows() && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
+                while (++(pe->smallestfreeidx) < pcfg.block_rows && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
 
                 // std::deque<InstructionNameSpace::Instruction>::iterator it = inst.begin();
                 // while (it != inst.end()) {
@@ -278,7 +278,7 @@ int StageProcessors::assignTask(BooleanDag* G, uint taskid, uint PEid, bigint st
                 //     //     pe->cache.insert(std::make_pair(predassignment->tid, srcidx));
                 //     //     pe->line[srcidx] = predassignment->tid;
                 //     //     if (pe->smallestfreeidx == srcidx) {
-                //     //         while (++(pe->smallestfreeidx) < pimcfg.getBlockRows() && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
+                //     //         while (++(pe->smallestfreeidx) < pcfg.block_rows && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
                 //     //     }
                 //     // }
                 //     // else {
@@ -293,7 +293,7 @@ int StageProcessors::assignTask(BooleanDag* G, uint taskid, uint PEid, bigint st
                 //     copyinst.dest = meshaddr(PEid, pe->smallestfreeidx);
                 //     copyinst.src[0] = meshaddr(srcpeid, srcidx);
                 //     instlist.push_back(copyinst);
-                //     while (++(pe->smallestfreeidx) < pimcfg.getBlockRows() && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
+                //     while (++(pe->smallestfreeidx) < pcfg.block_rows && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
                 //     // }
 
                 //     // remove STORE
@@ -343,7 +343,7 @@ int StageProcessors::assignTask(BooleanDag* G, uint taskid, uint PEid, bigint st
     instlist.push_back(opinst);
     pe->cache.insert(std::make_pair(taskid, pe->smallestfreeidx));
     pe->line[pe->smallestfreeidx] = taskid;
-    while (++(pe->smallestfreeidx) < pimcfg.getBlockRows() && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
+    while (++(pe->smallestfreeidx) < pcfg.block_rows && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
     pe->overwriteflag = pe->overwriteflag > pe->smallestfreeidx ? pe->overwriteflag : pe->smallestfreeidx;
 
     return 1;
@@ -393,14 +393,14 @@ int StageProcessors::dynamicWeightsAssignTask(BooleanDag* G, uint taskid, uint P
     a.tid = taskid;
     a.starttime = midlatency[PEid];
     // printf("[%d]\n", taskid);
-    static bigint computelatency = pimcfg.getComputeLatency();
+    static bigint computelatency = pcfg.compute_latency;
     int rmvbound = G->getinputsize()+G->getoutputsize();
     ProcessElem *pe = PE+PEid;
     Vertice *v = G->getvertice(taskid);
     uint prednum = v->prednum;
     bigint curmaxpelat = midlatency[PEid];
     SyncNode *sync = new SyncNode;
-    uint threads = pimcfg.getBlockNums() / pnum;
+    uint threads = pcfg.block_nums / pnum;
     InstructionNameSpace::Instruction opinst;
     opinst.taskid = taskid;
     opinst.op = Vtype2Instop(v->type);
@@ -467,7 +467,7 @@ int StageProcessors::dynamicWeightsAssignTask(BooleanDag* G, uint taskid, uint P
                 copyinst->inst.src[0] = meshaddr(srcpeid, srcidx);
                 copyinst->synctime = midlatency[srcpeid];
                 insertSyncNode(sync, copyinst);
-                while (++(pe->smallestfreeidx) < pimcfg.getBlockRows() && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
+                while (++(pe->smallestfreeidx) < pcfg.block_rows && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
                 
                 if (newselfblk) {
                     curmaxpelat += minblkt;
@@ -485,7 +485,7 @@ int StageProcessors::dynamicWeightsAssignTask(BooleanDag* G, uint taskid, uint P
                 loadinst.src[0] = meshaddr(pnum, predid);   //TODO: ADD MEM ADDR
 
                 loadinstlist.insert(std::make_pair(loadinst.src[0],loadinst));
-                loadlatency[PEid] += pimcfg.getLoadLatency() * threads;
+                loadlatency[PEid] += pcfg.load_latency * threads;
                 // printf("    LOAD %d %d %d %d\n", loadinst.src[0], loadinst.src[1], loadinst.src[2], loadinst.dest);
                 if (pe->smallestfreeidx == pe->overwriteflag) {
                     ++(pe->smallestfreeidx);
@@ -507,13 +507,13 @@ int StageProcessors::dynamicWeightsAssignTask(BooleanDag* G, uint taskid, uint P
         tmp = p->next;
         instlist.push_back(p->inst);
         // printf("    COPY %d %d %d %d\n", p->inst.src[0], p->inst.src[1], p->inst.src[2], p->inst.dest);
-        p1 = p->inst.src[0] / pimcfg.getBlockRows();
-        p2 = p->inst.dest / pimcfg.getBlockRows();
+        p1 = p->inst.src[0] / pcfg.block_rows;
+        p2 = p->inst.dest / pcfg.block_rows;
         level = getCommLevel(pnum, p1, p2);
         bigint max = midlatency[p1] > midlatency[p2] ? midlatency[p1] : midlatency[p2];
-        uint maxthreads = pimcfg.getCopyThreads(level) > threads ? threads : pimcfg.getCopyThreads(level);
+        uint maxthreads = pcfg.maxCopyThread[level] > threads ? threads : pcfg.maxCopyThread[level];
         if (level > 0) {
-            max += pimcfg.getCommWeight(level) * (threads / maxthreads);
+            max += pcfg.commWeight[level] * (threads / maxthreads);
         }
         else {
             max += computelatency;
@@ -531,7 +531,7 @@ int StageProcessors::dynamicWeightsAssignTask(BooleanDag* G, uint taskid, uint P
     pe->line[pe->smallestfreeidx] = taskid;
     midlatency[PEid] += computelatency;
     oplatency[PEid] += computelatency;
-    while (++(pe->smallestfreeidx) < pimcfg.getBlockRows() && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
+    while (++(pe->smallestfreeidx) < pcfg.block_rows && pe->line[pe->smallestfreeidx] < UINT_MAX);  // next smallestfreeidx
     pe->overwriteflag = pe->overwriteflag > pe->smallestfreeidx ? pe->overwriteflag : pe->smallestfreeidx;
     a.finishtime = midlatency[PEid];
     schedule.insert(std::make_pair(taskid, a));
@@ -615,7 +615,7 @@ int StageProcessors::releaseMem(BooleanDag* g, uint taskid, bool *assigned)
 int StageProcessors::assignFinish()
 {
     ProcessElem* p;
-    uint threads = pimcfg.getBlockNums() / pnum;
+    uint threads = pcfg.block_nums / pnum;
     for (uint i = 0u; i < pnum; ++i) {
         p = PE+i;
         std::vector<Assignment*>::iterator it;
@@ -628,7 +628,7 @@ int StageProcessors::assignFinish()
                 storeinst.op = InstructionNameSpace::STORE;
                 storeinst.src[0] = meshaddr(i,mp->second);
                 storeinst.dest = meshaddr(pnum, mp->first);
-                storelatency[storeinst.src[0]/pimcfg.getBlockRows()] += pimcfg.getStoreLatency() * threads;
+                storelatency[storeinst.src[0]/pcfg.block_rows] += pcfg.store_latency * threads;
                 storeinstlist.insert(std::make_pair(storeinst.dest,storeinst));
             }
         }
@@ -639,28 +639,28 @@ int StageProcessors::assignFinish()
 
 int StageProcessors::calcLatency()
 {
-    static bigint computelatency = pimcfg.getComputeLatency();
+    static bigint computelatency = pcfg.compute_latency;
     memset((void*)(loadlatency), 0, pnum*sizeof(bigint));
     memset((void*)(oplatency), 0, pnum*sizeof(bigint));
     memset((void*)(midlatency), 0, pnum*sizeof(bigint));
     memset((void*)(storelatency), 0, pnum*sizeof(bigint));
-    uint threads = pimcfg.getBlockNums() / pnum;
+    uint threads = pcfg.block_nums / pnum;
     for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
-        loadlatency[it->second.dest/pimcfg.getBlockRows()] += pimcfg.getLoadLatency() * threads;
+        loadlatency[it->second.dest/pcfg.block_rows] += pcfg.load_latency * threads;
     }
     for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = storeinstlist.begin(); it != storeinstlist.end(); ++it) {
-        storelatency[it->second.src[0]/pimcfg.getBlockRows()] += pimcfg.getStoreLatency() * threads;
+        storelatency[it->second.src[0]/pcfg.block_rows] += pcfg.store_latency * threads;
     }
     for (std::deque<InstructionNameSpace::Instruction>::iterator it = instlist.begin(); it < instlist.end(); ++it) {
         if (it->op == InstructionNameSpace::COPY) {
             uint p1, p2, level;
-            p1 = it->src[0] / pimcfg.getBlockRows();
-            p2 = it->dest / pimcfg.getBlockRows();
+            p1 = it->src[0] / pcfg.block_rows;
+            p2 = it->dest / pcfg.block_rows;
             level = getCommLevel(pnum, p1, p2);
             bigint max = midlatency[p1] > midlatency[p2] ? midlatency[p1] : midlatency[p2];
-            uint maxthreads = pimcfg.getCopyThreads(level) > threads ? threads : pimcfg.getCopyThreads(level);
+            uint maxthreads = pcfg.maxCopyThread[level] > threads ? threads : pcfg.maxCopyThread[level];
             if (level > 0) {
-                max += pimcfg.getCommWeight(level) * (threads / maxthreads);
+                max += pcfg.commWeight[level] * (threads / maxthreads);
             }
             else {
                 max += computelatency;
@@ -669,7 +669,7 @@ int StageProcessors::calcLatency()
             midlatency[p2] = max;
         }
         else {
-            uint p = it->src[0] / pimcfg.getBlockRows();
+            uint p = it->src[0] / pcfg.block_rows;
             midlatency[p] += computelatency;
             oplatency[p] += computelatency;
         }
@@ -679,26 +679,26 @@ int StageProcessors::calcLatency()
 
 int StageProcessors::calcEnergy()
 {
-    static double computeenergy = pimcfg.getComputeEnergy();
+    static double computeenergy = pcfg.compute_energy;
     memset((void*)(loadenergy), 0, pnum*sizeof(double));
     memset((void*)(midenergy), 0, pnum*sizeof(double));
     memset((void*)(storeenergy), 0, pnum*sizeof(double));
-    uint threads = pimcfg.getBlockNums() / pnum;
+    uint threads = pcfg.block_nums / pnum;
     for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
-        loadenergy[it->second.dest/pimcfg.getBlockRows()] += pimcfg.getLoadLatency() * threads;
+        loadenergy[it->second.dest/pcfg.block_rows] += pcfg.load_latency * threads;
     }
     for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = storeinstlist.begin(); it != storeinstlist.end(); ++it) {
-        storeenergy[it->second.src[0]/pimcfg.getBlockRows()] += pimcfg.getStoreLatency() * threads;
+        storeenergy[it->second.src[0]/pcfg.block_rows] += pcfg.store_latency * threads;
     }
     for (std::deque<InstructionNameSpace::Instruction>::iterator it = instlist.begin(); it < instlist.end(); ++it) {
         if (it->op == InstructionNameSpace::COPY) {
             uint p1, p2, level;
-            p1 = it->src[0] / pimcfg.getBlockRows();
-            p2 = it->dest / pimcfg.getBlockRows();
+            p1 = it->src[0] / pcfg.block_rows;
+            p2 = it->dest / pcfg.block_rows;
             level = getCommLevel(pnum, p1, p2);
-            if (level > 0 && level < pimcfg.getLevels()) {
-                midenergy[p1] += pimcfg.getReadEnergy(level) * threads;
-                midenergy[p2] += pimcfg.getWriteEnergy(level) * threads;
+            if (level > 0 && level < pcfg.levels) {
+                midenergy[p1] += pcfg.read_energy[level] * threads;
+                midenergy[p2] += pcfg.write_energy[level] * threads;
             }
             else {
                 printf("Level Error!\n");
@@ -706,7 +706,7 @@ int StageProcessors::calcEnergy()
             }
         }
         else {
-            uint p = it->src[0] / pimcfg.getBlockRows();
+            uint p = it->src[0] / pcfg.block_rows;
             midenergy[p] += computeenergy * threads;
         }
     }
@@ -772,7 +772,7 @@ bigint StageProcessors::getOPLatency() const
 double StageProcessors::getEnergy() const
 {
     double e = 0.0;
-    static double leackage = pimcfg.getLeackageEnergy();
+    static double leackage = pcfg.leackage_energy;
     for (uint i = 0u; i < pnum; ++i) {
         e += loadenergy[i] + midenergy[i] + storeenergy[i];
     }
@@ -839,7 +839,7 @@ uint StageProcessors::getLine(uint taskid)
     if (peid < UINT_MAX) {
         return (PE+peid)->cache[taskid];
     }
-    return pimcfg.getBlockRows();
+    return pcfg.block_rows;
 }
 
 uint const& StageProcessors::getOverwritepos(uint peid) const
@@ -859,13 +859,13 @@ Assignment* StageProcessors::getAssignmentByTask(uint taskid)
 
 void StageProcessors::getTime2SpatialUtil(std::map<bigint, uint> &res, bigint offset)
 {
-    static bigint computelatency = pimcfg.getComputeLatency();
+    static bigint computelatency = pcfg.compute_latency;
     memset((void*)(midlatency), 0, pnum*sizeof(bigint));
     bigint midstart = 0;
-    uint threads = pimcfg.getBlockNums() / pnum;
+    uint threads = pcfg.block_nums / pnum;
 
-    bool *assigned = new bool[pnum * pimcfg.getBlockRows()];
-    for (uint i = 0; i < pnum * pimcfg.getBlockRows(); ++i) {
+    bool *assigned = new bool[pnum * pcfg.block_rows];
+    for (uint i = 0; i < pnum * pcfg.block_rows; ++i) {
         assigned[i] = false;
     }
 
@@ -876,7 +876,7 @@ void StageProcessors::getTime2SpatialUtil(std::map<bigint, uint> &res, bigint of
     
     for (std::map<uint,InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
         assigned[it->second.dest] = true;
-        midstart += pimcfg.getLoadLatency() * threads;
+        midstart += pcfg.load_latency * threads;
         curtime = midstart;
         resit = res.find(curtime+offset);
         if (resit != res.end()) {
@@ -904,13 +904,13 @@ void StageProcessors::getTime2SpatialUtil(std::map<bigint, uint> &res, bigint of
         assigned[it->dest] = true;
         if (it->op == InstructionNameSpace::COPY) {
             uint p1, p2, level;
-            p1 = it->src[0] / pimcfg.getBlockRows();
-            p2 = it->dest / pimcfg.getBlockRows();
+            p1 = it->src[0] / pcfg.block_rows;
+            p2 = it->dest / pcfg.block_rows;
             level = getCommLevel(pnum, p1, p2);
             curtime = midlatency[p1] > midlatency[p2] ? midlatency[p1] : midlatency[p2];
-            uint maxthreads = pimcfg.getCopyThreads(level) > threads ? threads : pimcfg.getCopyThreads(level);
+            uint maxthreads = pcfg.maxCopyThread[level] > threads ? threads : pcfg.maxCopyThread[level];
             if (level > 0) {
-                curtime += pimcfg.getCommWeight(level) * (threads / maxthreads);
+                curtime += pcfg.commWeight[level] * (threads / maxthreads);
             }
             else {
                 curtime += computelatency;
@@ -919,7 +919,7 @@ void StageProcessors::getTime2SpatialUtil(std::map<bigint, uint> &res, bigint of
             midlatency[p2] = curtime;
         }
         else {
-            uint p = it->src[0] / pimcfg.getBlockRows();
+            uint p = it->src[0] / pcfg.block_rows;
             midlatency[p] += computelatency;
             oplatency[p] += computelatency;
             curtime = midlatency[p];
@@ -986,7 +986,7 @@ void StageProcessors::printInstructions(int stage)
     // printf("Stage %d:\n", stage);
 
     for (std::map<uint,InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
-        int pe[4] = {it->second.src[0]/pimcfg.getBlockRows(), it->second.src[1]/pimcfg.getBlockRows(),it->second.src[2]/pimcfg.getBlockRows(),it->second.dest/pimcfg.getBlockRows()};
+        int pe[4] = {it->second.src[0]/pcfg.block_rows, it->second.src[1]/pcfg.block_rows,it->second.src[2]/pcfg.block_rows,it->second.dest/pcfg.block_rows};
         // printf("\t%-8s\t%s%d[%d] %s%d[%d] %s%d[%d] %d[%d]", \
         //     InstructionNameSpace::instname[(int)(it->op)], \
         //     it->invflag[0]?"~":"", it->src[0], pe[0], \
@@ -1006,7 +1006,7 @@ void StageProcessors::printInstructions(int stage)
     }
 
     for (std::deque<InstructionNameSpace::Instruction>::iterator it = instlist.begin(); it < instlist.end(); ++it) {
-        int pe[4] = {it->src[0]/pimcfg.getBlockRows(), it->src[1]/pimcfg.getBlockRows(),it->src[2]/pimcfg.getBlockRows(),it->dest/pimcfg.getBlockRows()};
+        int pe[4] = {it->src[0]/pcfg.block_rows, it->src[1]/pcfg.block_rows,it->src[2]/pcfg.block_rows,it->dest/pcfg.block_rows};
         // printf("\t%-8s\t%s%d[%d] %s%d[%d] %s%d[%d] %d[%d]", \
         //     InstructionNameSpace::instname[(int)(it->op)], \
         //     it->invflag[0]?"~":"", it->src[0], pe[0], \
@@ -1026,7 +1026,7 @@ void StageProcessors::printInstructions(int stage)
     }
 
     for (std::map<uint,InstructionNameSpace::Instruction>::iterator it = storeinstlist.begin(); it != storeinstlist.end(); ++it) {
-        int pe[4] = {it->second.src[0]/pimcfg.getBlockRows(), it->second.src[1]/pimcfg.getBlockRows(),it->second.src[2]/pimcfg.getBlockRows(),it->second.dest/pimcfg.getBlockRows()};
+        int pe[4] = {it->second.src[0]/pcfg.block_rows, it->second.src[1]/pcfg.block_rows,it->second.src[2]/pcfg.block_rows,it->second.dest/pcfg.block_rows};
         // printf("\t%-8s\t%s%d[%d] %s%d[%d] %s%d[%d] %d[%d]", \
         //     InstructionNameSpace::instname[(int)(it->op)], \
         //     it->invflag[0]?"~":"", it->src[0], pe[0], \
