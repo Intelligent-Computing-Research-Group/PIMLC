@@ -165,7 +165,7 @@ uint placeAtEarlestPE(BooleanDag *G, StageProcessors *P, uint taskid)
         }
         bigint avail = pe->opeft;
         for (uint j = 0u; j < prednum; ++j) {
-            bigint predt = predfinishtime[j] + (CommWeight[getCommLevel(pnum, i, predpeid[j])]);
+            bigint predt = predfinishtime[j] + (PIMConf::getCommWeight(getCommLevel(pnum, i, predpeid[j])));
             avail = avail > predt ? avail : predt;
         }
         if (avail < est) {
@@ -290,7 +290,7 @@ double totalCost(double curcost, double futurecost, double stddeviation, double 
     uint pnum = P->getpnum();
     for (uint i = 0u; i < pnum; ++i) {
         double len = P->getPE(i)->cache.size();
-        double temp = len / BLOCKROW;
+        double temp = len / PIMConf::getBlockRows();
         pct = temp > pct ? temp : pct;
     }
     uint tasknum = P->getTaskNum();
@@ -334,6 +334,8 @@ uint getMaxidx(bigint *arr, uint n)
 
 uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, uint tasksleft)
 {
+    static uint blocknums = PIMConf::getBlockNums();
+    static bigint oplatency = PIMConf::getComputeLatency();
     Vertice *v = G->getvertice(taskid);
     uint pnum = P->getpnum();
     uint prednum = v->prednum;
@@ -346,7 +348,7 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
     static double avgcnt = 0;
 
     if (P->getTaskNum() == 0) {
-        avgblkcost = OPLATENCY;
+        avgblkcost = oplatency;
         avgcnt = 0;
     }
     /**
@@ -355,7 +357,7 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
      * stddeviation: normalcalc
      * maxrow: the change of max row
     */
-    uint threads = MESHSIZE / pnum;
+    uint threads = blocknums / pnum;
     uint succnum = v->succnum;
     ProcessElem* pe;
     bigint *midlat = P->getMidLatency();
@@ -444,21 +446,21 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
                     newmidlatency[i] = curmaxpelat;
                     if (srcpeid == maxidx) {
                         uint level = getCommLevel(pnum, i, srcpeid);
-                        uint maxthreads = MaxCopyThread[level] > threads ? threads : MaxCopyThread[level];
-                        cplat += CommWeight[level] * (threads / maxthreads);
+                        uint maxthreads = PIMConf::getCopyThreads(level) > threads ? threads : PIMConf::getCopyThreads(level);
+                        cplat += PIMConf::getCommWeight(level) * (threads / maxthreads);
                     }
                 }
                 else {
                     newmidlatency[srcpeid] = midlat[i];
                     if (i == maxidx) {
                         uint level = getCommLevel(pnum, i, srcpeid);
-                        uint maxthreads = MaxCopyThread[level] > threads ? threads : MaxCopyThread[level];
-                        cplat += CommWeight[level] * (threads / maxthreads);
+                        uint maxthreads = PIMConf::getCopyThreads(level) > threads ? threads : PIMConf::getCopyThreads(level);
+                        cplat += PIMConf::getCommWeight(level) * (threads / maxthreads);
                     }
                 }
             }
         }
-        newmidlatency[i] += OPLATENCY;
+        newmidlatency[i] += oplatency;
 
         ///< get futurecost - check each pred, find best src pe
         for (uint j = 0u; j < succnum; ++j) {
@@ -480,7 +482,7 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
         ///< get max row change
         maxrow = cplat;
         if (maxidx == i || cplat > 0) {
-            maxrow += OPLATENCY;
+            maxrow += oplatency;
         }
         // printf("Trying to assign %u to %u, weights: ", taskid, i);
         tmpcost = totalCost(curcost, futurecost, stddeviation, maxrow, P, tasksleft);
@@ -509,6 +511,8 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
 
 uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint> &maincluster, uint taskid, uint tasksleft)
 {
+    static uint blocknums = PIMConf::getBlockNums();
+    static bigint oplatency = PIMConf::getComputeLatency();
     Vertice *v = G->getvertice(taskid);
     uint pnum = P->getpnum();
     uint prednum = v->prednum;
@@ -544,7 +548,7 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
      * stddeviation: normalcalc
      * maxrow: the change of max row
     */
-    uint threads = MESHSIZE / pnum;
+    uint threads = blocknums / pnum;
     uint succnum = v->succnum;
     ProcessElem* pe;
     bigint *midlat = P->getMidLatency();
@@ -638,21 +642,21 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
                     newmidlatency[i] = curmaxpelat;
                     if (srcpeid == pnum-1) {
                         uint level = getCommLevel(pnum, i, srcpeid);
-                        uint maxthreads = MaxCopyThread[level] > threads ? threads : MaxCopyThread[level];
-                        cplat += CommWeight[level] * (threads / maxthreads);
+                        uint maxthreads = PIMConf::getCopyThreads(level) > threads ? threads : PIMConf::getCopyThreads(level);
+                        cplat += PIMConf::getCommWeight(level) * (threads / maxthreads);
                     }
                 }
                 else {
                     newmidlatency[srcpeid] = curmaxpelat;
                     if (i == pnum-1) {
                         uint level = getCommLevel(pnum, i, srcpeid);
-                        uint maxthreads = MaxCopyThread[level] > threads ? threads : MaxCopyThread[level];
-                        cplat += CommWeight[level] * (threads / maxthreads);
+                        uint maxthreads = PIMConf::getCopyThreads(level) > threads ? threads : PIMConf::getCopyThreads(level);
+                        cplat += PIMConf::getCommWeight(level) * (threads / maxthreads);
                     }
                 }
             }
         }
-        newmidlatency[i] += OPLATENCY;
+        newmidlatency[i] += oplatency;
 
         ///< get stddev change
         stddeviation = calculateStandardDeviation(newmidlatency, pnum);
@@ -667,7 +671,7 @@ uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint
         ///< get max row change
         maxrow = cplat;
         if (pnum-1 == i || cplat > 0) {
-            maxrow += OPLATENCY;
+            maxrow += oplatency;
         }
         // printf("Trying to assign %u to %u, weights: ", taskid, i);
         if (midlat[i] < midlat[maxidx] - 2*stddeviation) {

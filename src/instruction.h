@@ -10,7 +10,7 @@
 #ifndef __INSTRUCTION__
 #define __INSTRUCTION__
 
-#include "memory.h"
+#include "pimconfig.h"
 
 namespace InstructionNameSpace {
 enum InstructionType {

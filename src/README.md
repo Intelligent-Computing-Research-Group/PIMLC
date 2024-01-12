@@ -31,5 +31,5 @@ The main part in the `Schedule` is called `StageProcessors`. You can see [procel
 
 - The [placement.h](placement.h) is a submodule of the list-scheduling algorithm. As described in our reference, the list-scheduling algorithm can be divided into the priority calculation part and the placement part. This part is resibonsiable fo deciding the target processor of each task one by one.
 
-- The [memory.h](memory.h) and [instruction.h](instruction.h) includes other information and have no corresponding cpp files.
+- The [pimconfig.h](pimconfig.h) and [instruction.h](instruction.h) includes other information and have no corresponding cpp files.
 

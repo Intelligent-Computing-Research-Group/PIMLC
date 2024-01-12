@@ -1,4 +1,4 @@
-#include "../src/memory.h"
+#include "../src/pimconfig.h"
 #include "../src/booleandag.h"
 #include "../src/scheduler.h"
 #include "../src/importdag.h"
@@ -19,7 +19,8 @@ using namespace std;
 
 double maxutil(const std::map<bigint, uint> &util)
 {
-    double totalsubarrays = MESHSIZE * BLOCKROW;
+    static uint blocknums = PIMConf::getBlockNums();
+    double totalsubarrays = blocknums * PIMConf::getBlockRows();
     uint maxsubarrs = 0u;
     for (std::map<bigint, uint>::const_iterator it = util.begin(); it != util.end(); ++it) {
         maxsubarrs = maxsubarrs > it->second ? maxsubarrs : it->second;
@@ -29,7 +30,8 @@ double maxutil(const std::map<bigint, uint> &util)
 
 double avgutil(const std::map<bigint, uint> &util)
 {
-    double totalsubarrays = MESHSIZE * BLOCKROW;
+    static uint blocknums = PIMConf::getBlockNums();
+    double totalsubarrays = blocknums * PIMConf::getBlockRows();
     bigint timeprodsubarrs = 0ll;
     std::map<bigint, uint>::const_iterator it = util.begin();
     bigint lasttime = it->first;
@@ -73,11 +75,12 @@ int main(int argc, char *argv[])
     begintime = clock();
     const char *inputfile = argv[1];
     uint testnum = atoi(argv[2]);
+    uint blocknums = PIMConf::getBlockNums();
 
     BooleanDag *G = v2booleandag(inputfile);
     bigint opcnt = G->getsize() - G->getinputsize() - 1;
     char *benchmark = getBenchmarkName(inputfile);
-    uint searchbound = LOG2(MESHSIZE);
+    uint searchbound = LOG2(blocknums);
     // printf("Bsize:%d, searchbound:%d\n", Bsize, searchbound);
     
     Schedule *sche = new Schedule[searchbound+1];
@@ -93,8 +96,8 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < testnum; ++i) {
         clock_t ilpbegintime = clock();
         uint size = atoi(argv[3+i]);
-        uint Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
-        uint top = (Bsize < MESHSIZE ? Bsize : MESHSIZE);
+        uint Bsize = (size + PIMConf::getBlockCols() - 1) / PIMConf::getBlockCols();
+        uint top = (Bsize < blocknums ? Bsize : blocknums);
         CutSolver *solver = new CutSolver(Bsize, searchbound+1, cost);
 
         bool optimal = solver->isOptimal();
@@ -142,15 +145,15 @@ int main(int argc, char *argv[])
         }
 
         // if SIMD
-        uint ms = MESHSIZE * BLOCKCOL;
+        uint ms = blocknums * PIMConf::getBlockCols();
         size = ((size + ms - 1) / ms) * ms;
-        Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
-        if (searchbound < LOG2(MESHSIZE)) {
-            searchbound = LOG2(MESHSIZE);
-            sche[searchbound] = rankuCPDynamicWeightsSchedule(G, MESHSIZE);
+        Bsize = (size + PIMConf::getBlockCols() - 1) / PIMConf::getBlockCols();
+        if (searchbound < LOG2(blocknums)) {
+            searchbound = LOG2(blocknums);
+            sche[searchbound] = rankuCPDynamicWeightsSchedule(G, blocknums);
             cost[searchbound] = sche[searchbound].latency;
         }
-        for (uint j = 0; j < Bsize/MESHSIZE; ++j) {
+        for (uint j = 0; j < Bsize/blocknums; ++j) {
             // printInst(sche+i, offset, chunksize);
             // offset += chunksize;
             simdspatialutil.insert(std::make_pair(simdlatency, 0u));
@@ -177,7 +180,7 @@ int main(int argc, char *argv[])
         printf("SRAM,");
 #endif
         printf("%d*4*4*%d*%d,%s,%s,%lf,%lf,%lf,%lf,%lf,%lf,%lld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%ld\n", 
-            BANKNUM, BLOCKROW, BLOCKCOL, 
+            PIMConf::getLevelSize(PIMConf::getLevels()-1), PIMConf::getBlockRows(), PIMConf::getBlockCols(), 
             benchmark, argv[3+i], 
             (double)(latency) / 1000.0, energy / 1000.0, 
             (double)(simdlatency) / 1000.0, simdenergy / 1000.0, 

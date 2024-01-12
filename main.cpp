@@ -1,4 +1,4 @@
-#include "./src/memory.h"
+#include "./src/pimconfig.h"
 #include "./src/booleandag.h"
 #include "./src/scheduler.h"
 #include "./src/importdag.h"
@@ -29,17 +29,18 @@ int main(int argc, char *argv[])
     begintime = clock();
     const char *inputfile = argv[1];
     uint size = atoi(argv[2]);
-    uint Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
+    uint Bsize = (size + PIMConf::getBlockCols() - 1) / PIMConf::getBlockCols();
+    uint blocknums = PIMConf::getBlockNums();
 
     BooleanDag *G = v2booleandag(inputfile);
 
-    uint top = (Bsize < MESHSIZE ? Bsize : MESHSIZE);
+    uint top = (Bsize < blocknums ? Bsize : blocknums);
     uint searchbound = LOG2(top);
-    if (NPOWEROF2(searchbound) < Bsize && NPOWEROF2(searchbound) < MESHSIZE) ++searchbound;
+    if (NPOWEROF2(searchbound) < Bsize && NPOWEROF2(searchbound) < blocknums) ++searchbound;
     // printf("Bsize:%d, searchbound:%d\n", Bsize, searchbound);
     
-    Schedule *sche = new Schedule[LOG2(MESHSIZE)+1];
-    double *cost = new double[LOG2(MESHSIZE)+1];
+    Schedule *sche = new Schedule[LOG2(blocknums)+1];
+    double *cost = new double[LOG2(blocknums)+1];
 
     for (uint i = 0u; i <= searchbound; ++i) {
         if (algorithm == "HEFT") {
@@ -70,8 +71,8 @@ int main(int argc, char *argv[])
     double simdenergy = 0.0;
 
     printf("# compileCPUTime %ldms\n", (clock()-begintime) / (CLOCKS_PER_SEC/1000));
-    printf("# blockrows %u\n", BLOCKROW);
-    printf("# blockcols %u\n", BLOCKCOL);
+    printf("# blockrows %u\n", PIMConf::getBlockRows());
+    printf("# blockcols %u\n", PIMConf::getBlockCols());
     printf("# data %u\n", size);
     printf("# input %u\n", G->getinputsize());
     printf("# output %u\n", G->getoutputsize());
@@ -88,16 +89,16 @@ int main(int argc, char *argv[])
 
 
     // if SIMD
-    // uint ms = MESHSIZE * BLOCKCOL;
+    // uint ms = blocknums * PIMConf::getBlockCols();
     // size = ((size + ms - 1) / ms) * ms;
-    // Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
-    // if (searchbound < LOG2(MESHSIZE)) {
-    //     searchbound = LOG2(MESHSIZE);
-    //     sche[searchbound] = rankuHEFTSchedule(G, MESHSIZE);
+    // Bsize = (size + PIMConf::getBlockCols() - 1) / PIMConf::getBlockCols();
+    // if (searchbound < LOG2(blocknums)) {
+    //     searchbound = LOG2(blocknums);
+    //     sche[searchbound] = rankuHEFTSchedule(G, blocknums);
     //     cost[searchbound] = sche[searchbound].latency;
     // }
     
-    // for (uint j = 0; j < Bsize/MESHSIZE; ++j) {
+    // for (uint j = 0; j < Bsize/blocknums; ++j) {
     //     // printInst(sche+i, offset, chunksize);
     //     // offset += chunksize;
 

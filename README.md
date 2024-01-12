@@ -36,3 +36,8 @@ The [simulator](https://github.com/Intelligent-Computing-Research-Group/PIMLC-Si
 
 The benchmark is chosen from [EFPL Combinational Benchmark Suite](https://github.com/lsils/benchmarks) with some modifications. Use `git submodule update --init` to get the [benchmark submodule](https://github.com/Intelligent-Computing-Research-Group/PIMLC-Benchmark).
 
+
+## Future Works
+
+- Support reshape in block. Suppose 4 sub-array(256bits X 256bits) forms a mat and a mat works as a block (Atomic SIMD engine). We currently treat the block as a 256bits X 1024bits SIMD engine. But it is possible to make it a 512bits X 512bits or 1024bits X 256bits SIMD engine as well. 
+

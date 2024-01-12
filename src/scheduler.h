@@ -10,7 +10,6 @@
 #include "procelem.h"
 
 
-///< MESHSIZE is the max length
 ///< Explore 2^i's cost and find the best i
 
 /**

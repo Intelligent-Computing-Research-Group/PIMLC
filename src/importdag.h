@@ -10,7 +10,7 @@
 #define _IMPORTDAG_
 #include <string>
 #include <map>
-#include "memory.h"
+#include "pimconfig.h"
 #include "booleandag.h"
 
 BooleanDag *v2booleandag(const std::string &filename);

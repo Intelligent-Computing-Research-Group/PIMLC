@@ -15,7 +15,7 @@
 #include <stack>
 #include <map>
 #include <set>
-#include "memory.h"
+#include "pimconfig.h"
 
 /// @brief Supported Boolean operation
 enum VerticeType {

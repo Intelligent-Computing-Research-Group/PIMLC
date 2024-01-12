@@ -6,59 +6,22 @@
  * @date    2022-11-09
  * @note    
  */
-#include <string>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <algorithm>
+
 #include "importdag.h"
 #include "booleandag.h"
-#include "memory.h"
+#include "pimconfig.h"
+#include "iofile.h"
 
 #define SRCWEIGHT   0
-#define INVWEIGHT   OPWEIGHT
-#define ANDWEIGHT   OPWEIGHT
-#define ORWEIGHT    OPWEIGHT
-#define XORWEIGHT   OPWEIGHT
-#define XOR3WEIGHT  OPWEIGHT
-#define MAJWEIGHT   OPWEIGHT
-#define EDGEWEIGHT  COMMWEIGHT
+#define INVWEIGHT   PIMConf::getComputeLatency()
+#define ANDWEIGHT   PIMConf::getComputeLatency()
+#define ORWEIGHT    PIMConf::getComputeLatency()
+#define XORWEIGHT   PIMConf::getComputeLatency()
+#define XOR3WEIGHT  PIMConf::getComputeLatency()
+#define MAJWEIGHT   PIMConf::getComputeLatency()
+#define EDGEWEIGHT  PIMConf::getCommWeight(PIMConf::getLevels())
 
 using namespace std;
-
-typedef struct Node {
-    string name;
-    bool leaf = false;      // false: intermediate nodes; true: leaf/root nodes
-    bool inv = false;       // false: origin; true: need an inverter
-} node;
-
-void CheckFile(bool iFile, const string& filename)
-{
-    if (!iFile) {
-        cerr << "Error: Cannot open file " << filename << "!" << endl;
-        exit(2);
-    }
-}
-
-int CountOperands(const string& rhs) {
-    int count = 0;
-    for (char i : rhs) {
-        if (i == '&' || i == '|' || i == '^') {
-            count++;
-        }
-    }
-    return count;
-}
-
-void CheckOperand(node& a) {
-    if (a.name[0] == '~') {
-        a.inv = true;
-        a.name = a.name.substr(1);
-    }
-    if (a.name[0] != 'n') {
-        a.leaf = true;
-    }
-}
 
 /**
  * @brief verilog to booleandag
