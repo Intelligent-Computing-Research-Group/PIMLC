@@ -13,13 +13,6 @@
 #include "iofile.h"
 
 #define SRCWEIGHT   0
-#define INVWEIGHT   PIMConf::getComputeLatency()
-#define ANDWEIGHT   PIMConf::getComputeLatency()
-#define ORWEIGHT    PIMConf::getComputeLatency()
-#define XORWEIGHT   PIMConf::getComputeLatency()
-#define XOR3WEIGHT  PIMConf::getComputeLatency()
-#define MAJWEIGHT   PIMConf::getComputeLatency()
-#define EDGEWEIGHT  PIMConf::getCommWeight(PIMConf::getLevels())
 
 using namespace std;
 
@@ -101,17 +94,17 @@ BooleanDag *v2booleandag(const std::string &filename)
             }
             CheckOperand(operand[0]);   // set inv and name(remove '~' if exist)
             inv |= operand[0].inv ? (1<<0) : 0;
-            G->addVertice(destid, INVWEIGHT, VINV, inv, dest.name);
+            G->addVertice(destid, pimcfg.getComputeLatency(), VINV, inv, dest.name);
 
             // rhs is a constant
             if (operand[0].name[0] == 'n') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[0].name[0] == 'x') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[0].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
         }
 
@@ -134,31 +127,31 @@ BooleanDag *v2booleandag(const std::string &filename)
             inv |= operand[1].inv ? (1<<1) : 0;
 
             if (line.find('&') != std::string::npos) {
-                G->addVertice(destid, ANDWEIGHT, VAND, inv, dest.name);
+                G->addVertice(destid, pimcfg.getComputeLatency(), VAND, inv, dest.name);
             } else if (line.find('^') != std::string::npos) {
-                G->addVertice(destid, XORWEIGHT, VXOR, inv, dest.name);
+                G->addVertice(destid, pimcfg.getComputeLatency(), VXOR, inv, dest.name);
             } else if (line.find('|') != std::string::npos) {
-                G->addVertice(destid, ORWEIGHT, VOR, inv, dest.name);
+                G->addVertice(destid, pimcfg.getComputeLatency(), VOR, inv, dest.name);
             }
 
             if (operand[0].name[0] == 'n') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[0].name[0] == 'x') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[0].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
 
             if (operand[1].name[0] == 'n') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[1].name[0] == 'x') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[1].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
         }
 
@@ -188,37 +181,37 @@ BooleanDag *v2booleandag(const std::string &filename)
             CheckOperand(operand[2]);
             inv |= operand[2].inv ? (1<<2) : 0;
 
-            G->addVertice(destid, XOR3WEIGHT, VXOR3, inv, dest.name);
+            G->addVertice(destid, pimcfg.getComputeLatency(), VXOR3, inv, dest.name);
 
             // the third one is a constant
             if (operand[0].name[0] == 'n') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[0].name[0] == 'x') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[0].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
 
             if (operand[1].name[0] == 'n') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[1].name[0] == 'x') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[1].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
 
             if (operand[2].name[0] == 'n') {
-                G->addEdge(atoi(operand[2].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[2].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[2].name[0] == 'x') {
-                G->addEdge(atoi(operand[2].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[2].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[2].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
         }
         // Otherwise: majority gate, doesn't need conversion
@@ -255,36 +248,36 @@ BooleanDag *v2booleandag(const std::string &filename)
             CheckOperand(operand[2]);
             inv |= operand[2].inv ? (1<<2) : 0;
 
-            G->addVertice(destid, MAJWEIGHT, VMAJ, inv, dest.name);
+            G->addVertice(destid, pimcfg.getComputeLatency(), VMAJ, inv, dest.name);
 
             if (operand[0].name[0] == 'n') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[0].name[0] == 'x') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[0].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
 
             if (operand[1].name[0] == 'n') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[1].name[0] == 'x') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[1].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
 
             if (operand[2].name[0] == 'n') {
-                G->addEdge(atoi(operand[2].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[2].name.c_str()+1) - n_shift + x_num + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[2].name[0] == 'x') {
-                G->addEdge(atoi(operand[2].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[2].name.c_str()+1) + 1, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
             else if (operand[2].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pimcfg.getCommWeight(pimcfg.getLevels()));
             }
         }
     }

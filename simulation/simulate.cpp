@@ -19,8 +19,8 @@ using namespace std;
 
 double maxutil(const std::map<bigint, uint> &util)
 {
-    static uint blocknums = PIMConf::getBlockNums();
-    double totalsubarrays = blocknums * PIMConf::getBlockRows();
+    static uint blocknums = pimcfg.getBlockNums();
+    double totalsubarrays = blocknums * pimcfg.getBlockRows();
     uint maxsubarrs = 0u;
     for (std::map<bigint, uint>::const_iterator it = util.begin(); it != util.end(); ++it) {
         maxsubarrs = maxsubarrs > it->second ? maxsubarrs : it->second;
@@ -30,8 +30,8 @@ double maxutil(const std::map<bigint, uint> &util)
 
 double avgutil(const std::map<bigint, uint> &util)
 {
-    static uint blocknums = PIMConf::getBlockNums();
-    double totalsubarrays = blocknums * PIMConf::getBlockRows();
+    static uint blocknums = pimcfg.getBlockNums();
+    double totalsubarrays = blocknums * pimcfg.getBlockRows();
     bigint timeprodsubarrs = 0ll;
     std::map<bigint, uint>::const_iterator it = util.begin();
     bigint lasttime = it->first;
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     begintime = clock();
     const char *inputfile = argv[1];
     uint testnum = atoi(argv[2]);
-    uint blocknums = PIMConf::getBlockNums();
+    uint blocknums = pimcfg.getBlockNums();
 
     BooleanDag *G = v2booleandag(inputfile);
     bigint opcnt = G->getsize() - G->getinputsize() - 1;
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < testnum; ++i) {
         clock_t ilpbegintime = clock();
         uint size = atoi(argv[3+i]);
-        uint Bsize = (size + PIMConf::getBlockCols() - 1) / PIMConf::getBlockCols();
+        uint Bsize = (size + pimcfg.getBlockCols() - 1) / pimcfg.getBlockCols();
         uint top = (Bsize < blocknums ? Bsize : blocknums);
         CutSolver *solver = new CutSolver(Bsize, searchbound+1, cost);
 
@@ -145,9 +145,9 @@ int main(int argc, char *argv[])
         }
 
         // if SIMD
-        uint ms = blocknums * PIMConf::getBlockCols();
+        uint ms = blocknums * pimcfg.getBlockCols();
         size = ((size + ms - 1) / ms) * ms;
-        Bsize = (size + PIMConf::getBlockCols() - 1) / PIMConf::getBlockCols();
+        Bsize = (size + pimcfg.getBlockCols() - 1) / pimcfg.getBlockCols();
         if (searchbound < LOG2(blocknums)) {
             searchbound = LOG2(blocknums);
             sche[searchbound] = rankuCPDynamicWeightsSchedule(G, blocknums);
@@ -177,10 +177,10 @@ int main(int argc, char *argv[])
 #ifdef ReRAM
         printf("ReRAM,");
 #else
-        printf("SRAM,");
+        printf("%s,",pimcfg.name.c_str());
 #endif
         printf("%d*4*4*%d*%d,%s,%s,%lf,%lf,%lf,%lf,%lf,%lf,%lld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%ld\n", 
-            PIMConf::getLevelSize(PIMConf::getLevels()-1), PIMConf::getBlockRows(), PIMConf::getBlockCols(), 
+            pimcfg.getLevelSize(pimcfg.getLevels()-1), pimcfg.getBlockRows(), pimcfg.getBlockCols(), 
             benchmark, argv[3+i], 
             (double)(latency) / 1000.0, energy / 1000.0, 
             (double)(simdlatency) / 1000.0, simdenergy / 1000.0, 

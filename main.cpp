@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
     begintime = clock();
     const char *inputfile = argv[1];
     uint size = atoi(argv[2]);
-    uint Bsize = (size + PIMConf::getBlockCols() - 1) / PIMConf::getBlockCols();
-    uint blocknums = PIMConf::getBlockNums();
+    uint Bsize = (size + pimcfg.getBlockCols() - 1) / pimcfg.getBlockCols();
+    uint blocknums = pimcfg.getBlockNums();
 
     BooleanDag *G = v2booleandag(inputfile);
 
@@ -71,8 +71,8 @@ int main(int argc, char *argv[])
     double simdenergy = 0.0;
 
     printf("# compileCPUTime %ldms\n", (clock()-begintime) / (CLOCKS_PER_SEC/1000));
-    printf("# blockrows %u\n", PIMConf::getBlockRows());
-    printf("# blockcols %u\n", PIMConf::getBlockCols());
+    printf("# blockrows %u\n", pimcfg.getBlockRows());
+    printf("# blockcols %u\n", pimcfg.getBlockCols());
     printf("# data %u\n", size);
     printf("# input %u\n", G->getinputsize());
     printf("# output %u\n", G->getoutputsize());
@@ -89,9 +89,9 @@ int main(int argc, char *argv[])
 
 
     // if SIMD
-    // uint ms = blocknums * PIMConf::getBlockCols();
+    // uint ms = blocknums * pimcfg.getBlockCols();
     // size = ((size + ms - 1) / ms) * ms;
-    // Bsize = (size + PIMConf::getBlockCols() - 1) / PIMConf::getBlockCols();
+    // Bsize = (size + pimcfg.getBlockCols() - 1) / pimcfg.getBlockCols();
     // if (searchbound < LOG2(blocknums)) {
     //     searchbound = LOG2(blocknums);
     //     sche[searchbound] = rankuHEFTSchedule(G, blocknums);

@@ -32,8 +32,8 @@ public:
         static PIMConf _ins;
         return _ins;
     }
-    static void setGlobalPIMConf(const char *configfile);
-    static void printPIMConf();
+    void setGlobalPIMConf(const char *configfile);
+    void printPIMConf();
     void test() { printf("test!\n");}
 private:
     ///< function caller, init in initFunctionMap()
@@ -48,7 +48,7 @@ private:
 
     bool _latency_roundup;  ///< should roundup latency or not
 
-    int levels;   ///< the level number of PIM, not larger than 
+    int _levels;   ///< the level number of PIM, not larger than 
                         ///<   MAXPIMLEVEL, block is the lowest level
 
     int _level_size[MAXPIMLEVEL];   ///< the number of level k-1 units
@@ -96,101 +96,101 @@ private:
     bigint _commWeight[MAXPIMLEVEL+1];  ///< calculated in setGlobalPIMConf()
 public:
 
-    static inline const std::string& getName() {
+    inline const std::string& getName() {
         static PIMConf &ins = getInstance();
         return ins._name;
     }
-    static inline const double getFrequency() {
+    inline const double getFrequency() {
         static PIMConf &ins = getInstance();
         return ins._frequency;
     }
-    static inline const int getLevels() {
+    inline const int getLevels() {
         static PIMConf &ins = getInstance();
-        return ins.levels;
+        return ins._levels;
     }
-    static inline const int getLevelSize(const int &level) {
+    inline const int getLevelSize(const int &level) {
         static PIMConf &ins = getInstance();
-        return level<ins.levels ? ins._level_size[level] : 0;
+        return level<ins._levels ? ins._level_size[level] : 0;
     }
-    static inline const std::string& getLevelName(const int &level) {
+    inline const std::string& getLevelName(const int &level) {
         static PIMConf &ins = getInstance();
-        return level<ins.levels ? ins._level_name[level] : ins._level_name[0];
+        return level<ins._levels ? ins._level_name[level] : ins._level_name[0];
     }
-    static inline const int getScheduleLevel() {
+    inline const int getScheduleLevel() {
         static PIMConf &ins = getInstance();
         return ins._schedule_level;
     }
-    static inline const int getLevel0Cols() {
+    inline const int getLevel0Cols() {
         static PIMConf &ins = getInstance();
         return ins._level0_cols;
     }
-    static inline const int getLevel0Rows() {
+    inline const int getLevel0Rows() {
         static PIMConf &ins = getInstance();
         return ins._level0_rows;
     }
-    static inline const int getBlockCols() {
+    inline const int getBlockCols() {
         static PIMConf &ins = getInstance();
         return ins._block_cols;
     }
-    static inline const int getBlockRows() {
+    inline const int getBlockRows() {
         static PIMConf &ins = getInstance();
         return ins._block_rows;
     }
-    static inline const int getBlockNums() {
+    inline const int getBlockNums() {
         static PIMConf &ins = getInstance();
         return ins._block_nums;
     }
-    static inline const bigint getComputeLatency() {
+    inline const bigint getComputeLatency() {
         static PIMConf &ins = getInstance();
         return ins._compute_latency;
     }
-    static inline const double getComputeEnergy() {
+    inline const double getComputeEnergy() {
         static PIMConf &ins = getInstance();
         return ins._compute_energy;
     }
-    static inline const bigint getReadLatency(const int &level) {
+    inline const bigint getReadLatency(const int &level) {
         static PIMConf &ins = getInstance();
-        return level<ins.levels ? ins._read_latency[level] : 0ll;
+        return level<ins._levels ? ins._read_latency[level] : 0ll;
     }
-    static inline const bigint getWriteLatency(const int &level) {
+    inline const bigint getWriteLatency(const int &level) {
         static PIMConf &ins = getInstance();
-        return level<ins.levels ? ins._write_latency[level] : 0ll;
+        return level<ins._levels ? ins._write_latency[level] : 0ll;
     }
-    static inline const double getReadEnergy(const int &level) {
+    inline const double getReadEnergy(const int &level) {
         static PIMConf &ins = getInstance();
-        return level<ins.levels ? ins._read_energy[level] : 0.0;
+        return level<ins._levels ? ins._read_energy[level] : 0.0;
     }
-    static inline const double getWriteEnergy(const int &level) {
+    inline const double getWriteEnergy(const int &level) {
         static PIMConf &ins = getInstance();
-        return level<ins.levels ? ins._write_energy[level] : 0.0;
+        return level<ins._levels ? ins._write_energy[level] : 0.0;
     }
-    static inline const uint getCopyThreads(const int &level) {
+    inline const uint getCopyThreads(const int &level) {
         static PIMConf &ins = getInstance();
-        return level<ins.levels ? ins._maxCopyThread[level] : 0u;
+        return level<ins._levels ? ins._maxCopyThread[level] : 0u;
     }
-    static inline const bigint getLoadLatency() {
+    inline const bigint getLoadLatency() {
         static PIMConf &ins = getInstance();
         return ins._load_latency;
     }
-    static inline const bigint getStoreLatency() {
+    inline const bigint getStoreLatency() {
         static PIMConf &ins = getInstance();
         return ins._store_latency;
     }
-    static inline const double getLoadEnergy() {
+    inline const double getLoadEnergy() {
         static PIMConf &ins = getInstance();
         return ins._load_energy;
     }
-    static inline const double getStoreEnergy() {
+    inline const double getStoreEnergy() {
         static PIMConf &ins = getInstance();
         return ins._store_energy;
     }
-    static inline const double getLeackageEnergy() {
+    inline const double getLeackageEnergy() {
         static PIMConf &ins = getInstance();
         return ins._leackage_energy;
     }
-    static inline const bigint getCommWeight(const int &level) {
+    inline const bigint getCommWeight(const int &level) {
         static PIMConf &ins = getInstance();
-        return level<=ins.levels ? ins._commWeight[level] : 0u;
+        return level<=ins._levels ? ins._commWeight[level] : 0u;
     }
 public:
     PIMConf(const PIMConf&) = delete;
@@ -201,17 +201,43 @@ private:
     virtual void initFunctionMap();
     PIMConf();
     ~PIMConf() {};
+public:
+    /* read-only reference for direct acesss */
+    const std::string &name = _name;  ///< PIM name
+    const double &frequency = _frequency;
+    const bool &latency_roundup = _latency_roundup;
+    const int &levels = _levels;
+    const int (&level_size)[MAXPIMLEVEL] = _level_size;
+    const std::string (&level_name)[MAXPIMLEVEL] = _level_name;
+    const int &schedule_level = _schedule_level;
+    const int &level0_cols = _level0_cols;
+    const int &level0_rows = _level0_rows;
+    const int &block_cols = _block_cols;
+    const int &block_rows = _block_rows;
+    const int &block_nums = _block_nums;
+    const bigint &compute_latency = _compute_latency;
+    const double &compute_energy = _compute_energy;
+    const bigint (&read_latency)[MAXPIMLEVEL] = _read_latency;
+    const bigint (&write_latency)[MAXPIMLEVEL] = _write_latency;
+    const double (&read_energy)[MAXPIMLEVEL] = _read_energy;
+    const double (&write_energy)[MAXPIMLEVEL] = _write_energy;
+    const uint (&maxCopyThread)[MAXPIMLEVEL] = _maxCopyThread;
+    const bigint &load_latency = _load_latency;
+    const bigint &store_latency = _store_latency;
+    const double &load_energy = _load_energy;
+    const double &store_energy = _store_energy;
+    const double &leackage_energy = _leackage_energy;
+    const bigint (&commWeight)[MAXPIMLEVEL+1] = _commWeight;
 };
-
-#define MESHADDR(K,ROW) (K*PIMConf::getBlockRows()+ROW)
 
 extern PIMConf &pimcfg;
 
 inline int getCommLevel(uint totalpnum, uint p1, uint p2)
 {
     // TODO: Only support situation for 2^n yet
-    static uint blocknums = PIMConf::getBlockNums();
-    static int levelnums = PIMConf::getLevels();
+    static PIMConf &cfg = PIMConf::getInstance();
+    static uint blocknums = cfg.getBlockNums();
+    static int levelnums = cfg.getLevels();
     if (totalpnum > blocknums || (totalpnum > 1 && totalpnum % 2)) {
         return -1;
     }
@@ -221,12 +247,12 @@ inline int getCommLevel(uint totalpnum, uint p1, uint p2)
 
     int level = 0;
     // e.g. levelsize = [1, 4, 4, 4], blocknums=1*4*4*4=64
-    int size = PIMConf::getLevelSize(0);
+    int size = cfg.getLevelSize(0);
     while (level < levelnums) {
         if (p1 / size == p2 / size) {
             return level;   // on-chip communication
         }
-        size *= PIMConf::getLevelSize(++level);
+        size *= cfg.getLevelSize(++level);
     }
     return -1;
 }

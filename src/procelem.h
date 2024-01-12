@@ -39,7 +39,7 @@ typedef struct _PE {
     uint *line;            ///< index -> taskid
     uint smallestfreeidx;   ///< a flag record the smallest free index that starts at 0 and grows monotonically
     uint overwriteflag;     ///< a flag record the smallest index that we can overwrite
-    _PE() : id(0), opeft(0), smallestfreeidx(0), overwriteflag(0) {line=new uint[PIMConf::getBlockRows()];for(uint i=0;i<PIMConf::getBlockRows();++i)line[i]=UINT_MAX;};
+    _PE();
     ~_PE() {if(line) delete line;}
 } ProcessElem;
 

@@ -31,7 +31,7 @@ void PIMConf::setGlobalPIMConf(const char *configfile)
     ins._cycle_time = (bigint)(0.0001 + 1000.0/ins._frequency);
     if (ins._latency_roundup) {
         ins._compute_latency = roundup(ins._compute_latency,ins._cycle_time);
-        for (int i = 0; i < ins.levels; ++i) {
+        for (int i = 0; i < ins._levels; ++i) {
             ins._read_latency[i] = roundup(ins._read_latency[i],ins._cycle_time);
             ins._write_latency[i] = roundup(ins._write_latency[i],ins._cycle_time);
         }
@@ -40,13 +40,13 @@ void PIMConf::setGlobalPIMConf(const char *configfile)
     ins._block_rows = ins._level0_rows;
     ins._block_cols = ins._level0_cols;
     ins._block_nums = 1;
-    for (int i = 0; i < ins.levels; ++i) {
+    for (int i = 0; i < ins._levels; ++i) {
         ins._block_nums *= ins._level_size[i];
         ins._block_cols *= i<=ins._schedule_level ? ins._level_size[i] : 1;
         ins._maxCopyThread[i] = i==0 ? ins.getBlockNums()/ins._level_size[i] : ins._maxCopyThread[i-1]/ins._level_size[i];
         ins._commWeight[i] = ins._read_latency[i] + ins._write_latency[i];
     }
-    ins._commWeight[ins.levels] = ins._load_latency + ins._store_latency;
+    ins._commWeight[ins._levels] = ins._load_latency + ins._store_latency;
 }
 
 void PIMConf::printPIMConf()
@@ -54,7 +54,7 @@ void PIMConf::printPIMConf()
     PIMConf &ins = getInstance();
     auto traverse = [&ins](const auto &container) -> char 
     {
-        for(int i=0;i<ins.levels;++i) cout << container[i] << ' ';
+        for(int i=0;i<ins._levels;++i) cout << container[i] << ' ';
         return '\n';
     };
     cout << "-------- PIM Setting --------\n";
@@ -63,7 +63,7 @@ void PIMConf::printPIMConf()
     cout << "frequency = " << ins._frequency << "\n";
     cout << "latency-roundup = " << ins._latency_roundup << "\n";
     cout << "cycle-time = " << ins._cycle_time << "\n";
-    cout << "levels = " << ins.levels << "\n";
+    cout << "levels = " << ins._levels << "\n";
     cout << "level-size = " << traverse(ins._level_size);
     cout << "level-name = " << traverse(ins._level_name);
     cout << "schedule-level = " << ins._schedule_level << "\n";
@@ -98,7 +98,7 @@ PIMConf::PIMConf()
     _block_cols = 0;
     _block_rows = 0;
     _block_nums = 0;
-    levels = 0;
+    _levels = 0;
 
     _read_latency[0] = 0;
     _write_latency[0] = 0;
@@ -140,7 +140,7 @@ void PIMConf::initFunctionMap()
     options["name"] = [&](string &s) { this->_name = removespace(s); };
     options["frequency"] = [&](string &s) { this->_frequency= stod(s); };
     options["latency-roundup"] = [&](string &s) { this->_latency_roundup= (bool)(stoi(s)); };
-    options["levels"] = [&](string &s) { this->levels= stoi(s); };
+    options["levels"] = [&](string &s) { this->_levels= stoi(s); };
     options["level-size"] = [&](string &s) {
         size_t len = s.length();
         int t = 0, level = 0;

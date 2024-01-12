@@ -31,5 +31,5 @@ simulate:
 
 .PHONY:clean
 clean:
-	$(RM) $(CXX_BINS) $(CXX_OBJS)
+	$(RM) $(CXX_BINS) $(CXX_OBJS) simulation/simulate
 
