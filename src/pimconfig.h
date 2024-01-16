@@ -43,6 +43,8 @@ private:
     /* The 0-level is the smallest unit with bit cols and rows in the PIM */
     std::string _name;  ///< PIM name
 
+    int _chip_num;  ///< number of PIM chips
+
     double _frequency;  ///< clock frequency (GHz)
     bigint _cycle_time; ///< clock cycle (ps), calculated in setGlobalPIMConf()
 
@@ -59,6 +61,7 @@ private:
     int _schedule_level;    ///< The smallest level to be scheduled to 
                             ///<  form the MIMD system
 
+    int _max_threads;       ///< Max MIMD instruction threads
 
     int _level0_cols;
     int _level0_rows;
@@ -106,6 +109,7 @@ private:
 public:
     /* read-only reference for direct acesss */
     const std::string &name = _name;  ///< PIM name
+    const int &chip_num = _chip_num;
     const double &frequency = _frequency;
     const bigint &cycle_time = _cycle_time;
     const bool &latency_roundup = _latency_roundup;
@@ -113,6 +117,7 @@ public:
     const int (&level_size)[MAXPIMLEVEL] = _level_size;
     const std::string (&level_name)[MAXPIMLEVEL] = _level_name;
     const int &schedule_level = _schedule_level;
+    const int &max_threads = _max_threads;
     const int &level0_cols = _level0_cols;
     const int &level0_rows = _level0_rows;
     const int &block_cols = _block_cols;

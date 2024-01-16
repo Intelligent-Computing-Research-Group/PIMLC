@@ -18,31 +18,38 @@ using namespace std;
  */
 int main(int argc, char *argv[])
 {
+    pcfg.setGlobalPIMConf(argv[2]);
     string algorithm = "LBCP";  // defalt: LBCP
     if (argc < 3) {
         return 0;
     }
     if (argc >= 4) {
-        algorithm = argv[3];
+        algorithm = argv[4];
     }
     clock_t begintime;
     begintime = clock();
     const char *inputfile = argv[1];
-    uint size = atoi(argv[2]);
+    uint workload = atoi(argv[3]);
+    uint size = (workload+pcfg.chip_num-1) / pcfg.chip_num;
     uint Bsize = (size + pcfg.block_cols - 1) / pcfg.block_cols;
     uint blocknums = pcfg.block_nums;
+    uint max_pimthreads = pcfg.max_threads;
 
     BooleanDag *G = v2booleandag(inputfile);
 
-    uint top = (Bsize < blocknums ? Bsize : blocknums);
-    uint searchbound = LOG2(top);
+    // uint top = (Bsize < blocknums ? Bsize : blocknums);
+    uint searchbound = LOG2(blocknums);
     if (NPOWEROF2(searchbound) < Bsize && NPOWEROF2(searchbound) < blocknums) ++searchbound;
     // printf("Bsize:%d, searchbound:%d\n", Bsize, searchbound);
-    
+
     Schedule *sche = new Schedule[LOG2(blocknums)+1];
     double *cost = new double[LOG2(blocknums)+1];
 
     for (uint i = 0u; i <= searchbound; ++i) {
+        if (blocknums/NPOWEROF2(i) > max_pimthreads) {
+            cost[i] = 1e20;
+            continue;
+        }
         if (algorithm == "HEFT") {
             sche[i] = rankuHEFTSchedule(G, NPOWEROF2(i));
         }

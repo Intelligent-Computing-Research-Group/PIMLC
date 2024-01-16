@@ -43,9 +43,12 @@ void PIMConf::setGlobalPIMConf(const char *configfile)
     for (int i = 0; i < ins._levels; ++i) {
         ins._block_nums *= ins._level_size[i];
         ins._block_cols *= i<=ins._schedule_level ? ins._level_size[i] : 1;
-        ins._maxCopyThread[i] = i==0 ? ins.block_nums/ins._level_size[i] : ins._maxCopyThread[i-1]/ins._level_size[i];
         ins._commWeight[i] = ins._read_latency[i] + ins._write_latency[i];
     }
+    for (int i = 0; i < ins._levels; ++i) {
+        ins._maxCopyThread[i] = i==0 ? ins.block_nums/ins._level_size[i] : ins._maxCopyThread[i-1]/ins._level_size[i];
+    }
+    ins._max_threads>0 ? ins._max_threads : ins._block_nums;
     ins._commWeight[ins._levels] = ins._load_latency + ins._store_latency;
 }
 
@@ -60,6 +63,7 @@ void PIMConf::printPIMConf()
     cout << "-------- PIM Setting --------\n";
 
     cout << "name = " << ins._name << "\n";
+    cout << "chip-numver = " << ins._chip_num << "\n";
     cout << "frequency = " << ins._frequency << "\n";
     cout << "latency-roundup = " << ins._latency_roundup << "\n";
     cout << "cycle-time = " << ins._cycle_time << "\n";
@@ -67,6 +71,7 @@ void PIMConf::printPIMConf()
     cout << "level-size = " << traverse(ins._level_size);
     cout << "level-name = " << traverse(ins._level_name);
     cout << "schedule-level = " << ins._schedule_level << "\n";
+    cout << "max-threads = " << ins._max_threads << "\n";
     cout << "smallest-unit-cols = " << ins._level0_cols << "\n";
     cout << "smallest-unit-rows = " << ins._level0_rows << "\n";
 
@@ -92,6 +97,7 @@ void PIMConf::printPIMConf()
 PIMConf::PIMConf()
 {
     _name = "PIM";
+    _chip_num = 1;
     _frequency = 1.0;
     _cycle_time = 0;
     _latency_roundup = true;
@@ -99,7 +105,7 @@ PIMConf::PIMConf()
     _block_rows = 0;
     _block_nums = 0;
     _levels = 0;
-
+    _max_threads = 0;
     _read_latency[0] = 0;
     _write_latency[0] = 0;
     _read_energy[0] = 0.0;
@@ -138,6 +144,7 @@ void PIMConf::initFunctionMap()
 {
 
     options["name"] = [&](string &s) { this->_name = removespace(s); };
+    options["chip-number"] = [&](string &s) { this->_chip_num = stoi(s); };
     options["frequency"] = [&](string &s) { this->_frequency= stod(s); };
     options["latency-roundup"] = [&](string &s) { this->_latency_roundup= (bool)(stoi(s)); };
     options["levels"] = [&](string &s) { this->_levels= stoi(s); };
@@ -172,6 +179,7 @@ void PIMConf::initFunctionMap()
         }
     };
     options["schedule-level"] = [&](string &s) { this->_schedule_level= stoi(s); };
+    options["max-threads"] = [&](string &s) { this->_max_threads= stoi(s); };
     options["smallest-unit-cols"] = [&](string &s) { this->_level0_cols= stoi(s); };
     options["smallest-unit-rows"] = [&](string &s) { this->_level0_rows= stoi(s); };
     options["compute-latency"] = [&](string &s) { this->_compute_latency = stoll(s); };

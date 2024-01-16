@@ -18,7 +18,9 @@
 typedef struct Schedule {
     bigint latency;     ///< total latency
     bigint oplatency;   ///< total latency (operations)
+    bigint iolatency;   ///< load/store latency
     double energy;      ///< total energy
+    double ioenergy;    ///< total I/O energy
     int chunksize;      ///< the size of chunk in this schedule
     StageProcessors *p; ///< the head of stage list
 } Schedule;

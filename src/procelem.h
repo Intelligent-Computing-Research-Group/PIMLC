@@ -113,7 +113,9 @@ public:
     uint getTaskNum() const;
     uint getTaskNum(uint id) const;
     bigint getLatency() const;
+    bigint getIOLatency() const;
     bigint getOPLatency() const;
+    double getIOEnergy() const;
     double getEnergy() const;
     uint const& getpnum() const;
     bigint const& getPEMidLatency(const uint &id) const;

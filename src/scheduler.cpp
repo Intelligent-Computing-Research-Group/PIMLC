@@ -41,15 +41,18 @@ Schedule rankuHEFTSchedule(BooleanDag *G, uint workload)
     StageProcessors* p = HEFT(G, pnum, ranklist);
     sche.p = p;
     sche.latency = 0;
+    sche.iolatency = 0;
     sche.oplatency = 0;
     sche.energy = 0;
+    sche.ioenergy = 0;
     while (p) {
         p->calcLatency();
         p->calcEnergy();
         sche.latency += p->getLatency();
+        sche.iolatency += p->getIOLatency();
         sche.oplatency += p->getOPLatency();
         sche.energy += p->getEnergy();
-
+        sche.ioenergy += p->getIOEnergy();
         // printf("%lld %lf\n", sche.latency, sche.energy);
         p = p->next;
     }
@@ -85,15 +88,18 @@ Schedule rankuDynamicWeightsSchedule(BooleanDag *G, uint workload)
     StageProcessors* p = DynamicWeights(G, pnum, ranklist);
     sche.p = p;
     sche.latency = 0;
+    sche.iolatency = 0;
     sche.oplatency = 0;
     sche.energy = 0;
+    sche.ioenergy = 0;
     while (p) {
         // p->calcLatency();
         p->calcEnergy();
         sche.latency += p->getLatency();
+        sche.iolatency += p->getIOLatency();
         sche.oplatency += p->getOPLatency();
         sche.energy += p->getEnergy();
-
+        sche.ioenergy += p->getIOEnergy();
         // printf("%lld %lf\n", sche.latency, sche.energy);
         p = p->next;
     }
@@ -130,15 +136,18 @@ Schedule rankuCPDynamicWeightsSchedule(BooleanDag *G, uint workload)
     StageProcessors* p = CPDynamicWeights(G, pnum, ranklist, maincluster);
     sche.p = p;
     sche.latency = 0;
+    sche.iolatency = 0;
     sche.oplatency = 0;
     sche.energy = 0;
+    sche.ioenergy = 0;
     while (p) {
         // p->calcLatency();
         p->calcEnergy();
         sche.latency += p->getLatency();
+        sche.iolatency += p->getIOLatency();
         sche.oplatency += p->getOPLatency();
         sche.energy += p->getEnergy();
-
+        sche.ioenergy += p->getIOEnergy();
         // printf("%lld %lf\n", sche.latency, sche.energy);
         p = p->next;
     }

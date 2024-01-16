@@ -757,6 +757,21 @@ bigint StageProcessors::getLatency() const
     return ll + ml + sl;
 }
 
+bigint StageProcessors::getIOLatency() const
+{
+    int i = 0;
+    bigint ll, sl;
+
+    ll = 0;
+    sl = 0;
+    for (uint i = 0u; i < pnum; ++i) {
+        ll += loadlatency[i];
+        sl += storelatency[i];
+    }
+    // printf("%lld %lld %lld\n", ll, ml, sl);
+    return ll + sl;
+}
+
 bigint StageProcessors::getOPLatency() const
 {
     bigint op;
@@ -777,6 +792,15 @@ double StageProcessors::getEnergy() const
         e += loadenergy[i] + midenergy[i] + storeenergy[i];
     }
     e += leackage * getLatency();
+    return e;
+}
+
+double StageProcessors::getIOEnergy() const
+{
+    double e = 0.0;
+    for (uint i = 0u; i < pnum; ++i) {
+        e += loadenergy[i] + storeenergy[i];
+    }
     return e;
 }
 

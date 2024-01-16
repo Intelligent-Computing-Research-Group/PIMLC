@@ -1,5 +1,6 @@
 workload=(1 1048576)
-benchmark=(adder cavlc dec div int2float log2 max multiplier priority router sin sqrt)algorithm=(HEFT LBCP)
+benchmark=(adder cavlc dec div int2float log2 max multiplier priority router sin sqrt)
+algorithm=(HEFT LBCP)
 
 
 rm -rf trace

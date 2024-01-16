@@ -91,25 +91,25 @@ for index, row in csvdata.iterrows():
         if (name=="SRAM#4"):
             smallsramthroughput[benchmark] = row['throughput(GOPS)']/1000
             smallsimdsramthroughput[benchmark] = row['simdthroughput(GOPS)']/1000
-            smallsramefficiency[benchmark] = row['opearations(Ops)']/(row['energy(nJ)']*1000)       #sramefficiency[benchmark] = row['efficiency(TOPS/W)']
-            smallsimdsramefficiency[benchmark] = row['opearations(Ops)']/(row['simdenergy(nJ)']*1000)    #simdsramefficiency[benchmark] = row['simdefficiency(TOPS/W)']
+            smallsramefficiency[benchmark] = row['operations(Ops)']/(row['energy(nJ)']*1000)       #sramefficiency[benchmark] = row['efficiency(TOPS/W)']
+            smallsimdsramefficiency[benchmark] = row['operations(Ops)']/(row['simdenergy(nJ)']*1000)    #simdsramefficiency[benchmark] = row['simdefficiency(TOPS/W)']
         else:
             smallrramthroughput[benchmark] = row['throughput(GOPS)']/1000
             smallsimdrramthroughput[benchmark] = row['simdthroughput(GOPS)']/1000
-            smallrramefficiency[benchmark] = row['opearations(Ops)']/(row['energy(nJ)']*1000)       # rramefficiency[benchmark] = row['efficiency(TOPS/W)']
-            smallsimdrramefficiency[benchmark] = row['opearations(Ops)']/(row['simdenergy(nJ)']*1000)    # simdrramefficiency[benchmark] = row['simdefficiency(TOPS/W)']
+            smallrramefficiency[benchmark] = row['operations(Ops)']/(row['energy(nJ)']*1000)       # rramefficiency[benchmark] = row['efficiency(TOPS/W)']
+            smallsimdrramefficiency[benchmark] = row['operations(Ops)']/(row['simdenergy(nJ)']*1000)    # simdrramefficiency[benchmark] = row['simdefficiency(TOPS/W)']
 
     if (size==1048576):
         if (name=="SRAM#4"):
             sramthroughput[benchmark] = row['throughput(GOPS)']/1000
             simdsramthroughput[benchmark] = row['simdthroughput(GOPS)']/1000
-            sramefficiency[benchmark] = row['opearations(Ops)']/(row['energy(nJ)']*1000)    #sramefficiency[benchmark] = row['efficiency(TOPS/W)']
-            simdsramefficiency[benchmark] = row['opearations(Ops)']/(row['simdenergy(nJ)']*1000)    #simdsramefficiency[benchmark] = row['simdefficiency(TOPS/W)']
+            sramefficiency[benchmark] = row['operations(Ops)']/(row['energy(nJ)']*1000)    #sramefficiency[benchmark] = row['efficiency(TOPS/W)']
+            simdsramefficiency[benchmark] = row['operations(Ops)']/(row['simdenergy(nJ)']*1000)    #simdsramefficiency[benchmark] = row['simdefficiency(TOPS/W)']
         else:
             rramthroughput[benchmark] = row['throughput(GOPS)']/1000
             simdrramthroughput[benchmark] = row['simdthroughput(GOPS)']/1000
-            rramefficiency[benchmark] = row['opearations(Ops)']/(row['energy(nJ)']*1000)    # rramefficiency[benchmark] = row['efficiency(TOPS/W)']
-            simdrramefficiency[benchmark] = row['opearations(Ops)']/(row['simdenergy(nJ)']*1000)    # simdrramefficiency[benchmark] = row['simdefficiency(TOPS/W)']
+            rramefficiency[benchmark] = row['operations(Ops)']/(row['energy(nJ)']*1000)    # rramefficiency[benchmark] = row['efficiency(TOPS/W)']
+            simdrramefficiency[benchmark] = row['operations(Ops)']/(row['simdenergy(nJ)']*1000)    # simdrramefficiency[benchmark] = row['simdefficiency(TOPS/W)']
 
     if name not in speedup:
         speedup[name] = dict()
