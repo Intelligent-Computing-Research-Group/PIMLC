@@ -685,10 +685,10 @@ int StageProcessors::calcEnergy()
     memset((void*)(storeenergy), 0, pnum*sizeof(double));
     uint threads = pcfg.block_nums / pnum;
     for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = loadinstlist.begin(); it != loadinstlist.end(); ++it) {
-        loadenergy[it->second.dest/pcfg.block_rows] += pcfg.load_latency * threads;
+        loadenergy[it->second.dest/pcfg.block_rows] += pcfg.load_energy * threads;
     }
     for (std::map<uint, InstructionNameSpace::Instruction>::iterator it = storeinstlist.begin(); it != storeinstlist.end(); ++it) {
-        storeenergy[it->second.src[0]/pcfg.block_rows] += pcfg.store_latency * threads;
+        storeenergy[it->second.src[0]/pcfg.block_rows] += pcfg.store_energy * threads;
     }
     for (std::deque<InstructionNameSpace::Instruction>::iterator it = instlist.begin(); it < instlist.end(); ++it) {
         if (it->op == InstructionNameSpace::COPY) {
