@@ -34,6 +34,6 @@ StageProcessors* DynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint, u
 
 StageProcessors* CPDynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint, uint> &ranklist, std::set<uint> &maincluster);
 
-uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, uint tasksleft);
-uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint> &maincluster, uint taskid, uint tasksleft);
+uint placeWithDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, uint tasksleft);
+uint placeWithCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint> &maincluster, uint taskid, uint tasksleft);
 #endif

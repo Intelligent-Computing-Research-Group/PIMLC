@@ -211,7 +211,7 @@ StageProcessors* DynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint, u
         while (ranklist.size() && pid != UINT_MAX) {
             iter = ranklist.begin();
             taskid = iter->second;
-            pid = placeAcdtoDynamicWeights(G, *p, taskid, ranklist.size());
+            pid = placeWithDynamicWeights(G, *p, taskid, ranklist.size());
             if (pid != UINT_MAX) {
                 ranklist.erase(iter);
                 ++taskcnt;
@@ -256,7 +256,7 @@ StageProcessors* CPDynamicWeights(BooleanDag *G, int pnum, std::multimap<bigint,
         while (ranklist.size() && pid != UINT_MAX) {
             iter = ranklist.begin();
             taskid = iter->second;
-            pid = placeAcdtoCPDynamicWeights(G, *p, maincluster, taskid, ranklist.size());
+            pid = placeWithCPDynamicWeights(G, *p, maincluster, taskid, ranklist.size());
             if (pid != UINT_MAX) {
                 // if (pnum == 64) {
                 //     printf("[%u][%c] ", taskid, (maincluster.find(taskid)==maincluster.end())?'n':'m');
@@ -332,7 +332,7 @@ uint getMaxidx(bigint *arr, uint n)
     return idx;
 }
 
-uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, uint tasksleft)
+uint placeWithDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, uint tasksleft)
 {
     static uint blocknums = pcfg.block_nums;
     static bigint oplatency = pcfg.compute_latency;
@@ -509,7 +509,7 @@ uint placeAcdtoDynamicWeights(BooleanDag *G, StageProcessors *P, uint taskid, ui
     return pid;
 }
 
-uint placeAcdtoCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint> &maincluster, uint taskid, uint tasksleft)
+uint placeWithCPDynamicWeights(BooleanDag *G, StageProcessors *P, std::set<uint> &maincluster, uint taskid, uint tasksleft)
 {
     static uint blocknums = pcfg.block_nums;
     static bigint oplatency = pcfg.compute_latency;

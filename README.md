@@ -3,7 +3,7 @@ Logic Compilation for Processing-in-Memory
  
  -------------------------------------------
 
-This project provide a compiler to convert high-level Boolean function into the the low-level primitives support by bit-serial based processing-in-memory system.
+This project provide a compiler to convert high-level Boolean function (written as combinational verilog module) into the the low-level primitives support by bit-serial based processing-in-memory system.
 
 ## Installation
 
@@ -33,17 +33,6 @@ First, you should edit Doxyfile for further configuration and you can refer to t
 Use `doxygen` command (you need to install doxygen first) to generate documentation in the `html` and `latex` folder. We basically use the web browesr and start with the `index.html` in `html`.
 
 
-
-
-
-## C/C++ to Verilog (IR conversion)
- 
-## Netlist Synthesis (Compilation)
-
-## Netlist to Instruction (Scheduling + Codegen)  
-
-## Instruction Execution (Execution)
- 
 ## Validation and Benchmark
 
 We built a simulator and use existing benchmark to validate the functionality of our PIMLC.
