@@ -1,10 +1,29 @@
-# LC4PIM {#mainpage}
+# PIMLC {#mainpage}
 Logic Compilation for Processing-in-Memory
  
  -------------------------------------------
 
 This project provide a compiler to convert high-level Boolean function into the the low-level primitives support by bit-serial based processing-in-memory system.
 
+## Installation
+
+On Ubuntu 20.04:
+```
+sudo apt-get install coinor-cbc=2.8.12-1build2 coinor-libcbc-dev=2.8.12-1build2 # coinor libs for ILP part
+git clone --recursive https://github.com/Intelligent-Computing-Research-Group/PIMLC.git
+cd PIMLC
+make
+```
+
+## Run
+
+After installation you can generate logic instructions using:
+`./bin/codegen ./benchmark/div.v ./config/SRAM.conf 1024 LBCP > test.asm`. 
+- `./bin/codegen` is compiled from source code
+- `./benchmark/div.v` is a divisor module from PIMLC's submodule [PIMLC-Benchmark](https://github.com/Intelligent-Computing-Research-Group/PIMLC-Benchmark). 
+- `./config/SRAM.conf` is the config file of your PIM.
+
+You can also refer to `simulation/simulate.sh` to generate performance statistics data.
 
 ## Doxygen
 This repo uses Doxygen to generate documentation from source code.
@@ -14,9 +33,7 @@ First, you should edit Doxyfile for further configuration and you can refer to t
 Use `doxygen` command (you need to install doxygen first) to generate documentation in the `html` and `latex` folder. We basically use the web browesr and start with the `index.html` in `html`.
 
 
-## Installation
-The ILP part needs coinor libs:
-`sudo apt-get install coinor-cbc=2.8.12-1build2 coinor-libcbc-dev=2.8.12-1build2`
+
 
 
 ## C/C++ to Verilog (IR conversion)
