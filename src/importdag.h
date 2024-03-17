@@ -1,7 +1,7 @@
 /**  
  * @file    importdag.h
  * @brief   Import a DAG in other forms
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 2.0
  * @date    2022-11-09
  * @note    
@@ -10,7 +10,7 @@
 #define _IMPORTDAG_
 #include <string>
 #include <map>
-#include "memory.h"
+#include "pimconfig.h"
 #include "booleandag.h"
 
 BooleanDag *v2booleandag(const std::string &filename);

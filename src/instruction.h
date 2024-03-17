@@ -1,7 +1,7 @@
 /**  
  * @file    instruction.h
  * @brief   instruction details
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 2.0
  * @date    2022-11-09
  * @note    
@@ -10,7 +10,7 @@
 #ifndef __INSTRUCTION__
 #define __INSTRUCTION__
 
-#include "memory.h"
+#include "pimconfig.h"
 
 namespace InstructionNameSpace {
 enum InstructionType {

@@ -1,7 +1,7 @@
 /**  
  * @file    ILP.h
  * @brief   Wrappers for coin-or Cbc
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 2.1
  * @date    2022-11-10
  * @note    

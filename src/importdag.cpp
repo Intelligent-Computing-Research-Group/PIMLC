@@ -1,64 +1,20 @@
 /**  
  * @file    importdag.cpp
  * @brief   Import a DAG in other forms
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 2.0
  * @date    2022-11-09
  * @note    
  */
-#include <string>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <algorithm>
+
 #include "importdag.h"
 #include "booleandag.h"
-#include "memory.h"
+#include "pimconfig.h"
+#include "iofile.h"
 
 #define SRCWEIGHT   0
-#define INVWEIGHT   OPWEIGHT
-#define ANDWEIGHT   OPWEIGHT
-#define ORWEIGHT    OPWEIGHT
-#define XORWEIGHT   OPWEIGHT
-#define XOR3WEIGHT  OPWEIGHT
-#define MAJWEIGHT   OPWEIGHT
-#define EDGEWEIGHT  COMMWEIGHT
 
 using namespace std;
-
-typedef struct Node {
-    string name;
-    bool leaf = false;      // false: intermediate nodes; true: leaf/root nodes
-    bool inv = false;       // false: origin; true: need an inverter
-} node;
-
-void CheckFile(bool iFile, const string& filename)
-{
-    if (!iFile) {
-        cerr << "Error: Cannot open file " << filename << "!" << endl;
-        exit(2);
-    }
-}
-
-int CountOperands(const string& rhs) {
-    int count = 0;
-    for (char i : rhs) {
-        if (i == '&' || i == '|' || i == '^') {
-            count++;
-        }
-    }
-    return count;
-}
-
-void CheckOperand(node& a) {
-    if (a.name[0] == '~') {
-        a.inv = true;
-        a.name = a.name.substr(1);
-    }
-    if (a.name[0] != 'n') {
-        a.leaf = true;
-    }
-}
 
 /**
  * @brief verilog to booleandag
@@ -138,23 +94,22 @@ BooleanDag *v2booleandag(const std::string &filename)
             }
             CheckOperand(operand[0]);   // set inv and name(remove '~' if exist)
             inv |= operand[0].inv ? (1<<0) : 0;
-            G->addVertice(destid, INVWEIGHT, VINV, inv, dest.name);
+            G->addVertice(destid, pcfg.compute_latency, VINV, inv, dest.name);
 
             // rhs is a constant
             if (operand[0].name[0] == 'n') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[0].name[0] == 'x') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[0].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
         }
 
         // case 2: 2-input gate
         else if (num_operands == 1) {
-            std::string node_shape = "circle";
             temp = rhs.find_first_not_of(' ');
             while (rhs[temp] != ' ') {
                 operand[0].name += rhs[temp];
@@ -172,31 +127,31 @@ BooleanDag *v2booleandag(const std::string &filename)
             inv |= operand[1].inv ? (1<<1) : 0;
 
             if (line.find('&') != std::string::npos) {
-                G->addVertice(destid, ANDWEIGHT, VAND, inv, dest.name);
+                G->addVertice(destid, pcfg.compute_latency, VAND, inv, dest.name);
             } else if (line.find('^') != std::string::npos) {
-                G->addVertice(destid, XORWEIGHT, VXOR, inv, dest.name);
+                G->addVertice(destid, pcfg.compute_latency, VXOR, inv, dest.name);
             } else if (line.find('|') != std::string::npos) {
-                G->addVertice(destid, ORWEIGHT, VOR, inv, dest.name);
+                G->addVertice(destid, pcfg.compute_latency, VOR, inv, dest.name);
             }
 
             if (operand[0].name[0] == 'n') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[0].name[0] == 'x') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[0].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
 
             if (operand[1].name[0] == 'n') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[1].name[0] == 'x') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[1].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
         }
 
@@ -226,37 +181,37 @@ BooleanDag *v2booleandag(const std::string &filename)
             CheckOperand(operand[2]);
             inv |= operand[2].inv ? (1<<2) : 0;
 
-            G->addVertice(destid, XOR3WEIGHT, VXOR3, inv, dest.name);
+            G->addVertice(destid, pcfg.compute_latency, VXOR3, inv, dest.name);
 
             // the third one is a constant
             if (operand[0].name[0] == 'n') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[0].name[0] == 'x') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[0].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
 
             if (operand[1].name[0] == 'n') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[1].name[0] == 'x') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[1].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
 
             if (operand[2].name[0] == 'n') {
-                G->addEdge(atoi(operand[2].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[2].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[2].name[0] == 'x') {
-                G->addEdge(atoi(operand[2].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[2].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[2].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
         }
         // Otherwise: majority gate, doesn't need conversion
@@ -293,36 +248,36 @@ BooleanDag *v2booleandag(const std::string &filename)
             CheckOperand(operand[2]);
             inv |= operand[2].inv ? (1<<2) : 0;
 
-            G->addVertice(destid, MAJWEIGHT, VMAJ, inv, dest.name);
+            G->addVertice(destid, pcfg.compute_latency, VMAJ, inv, dest.name);
 
             if (operand[0].name[0] == 'n') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[0].name[0] == 'x') {
-                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[0].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[0].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
 
             if (operand[1].name[0] == 'n') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[1].name[0] == 'x') {
-                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[1].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[1].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
 
             if (operand[2].name[0] == 'n') {
-                G->addEdge(atoi(operand[2].name.c_str()+1) - n_shift + x_num + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[2].name.c_str()+1) - n_shift + x_num + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[2].name[0] == 'x') {
-                G->addEdge(atoi(operand[2].name.c_str()+1) + 1, destid, EDGEWEIGHT);
+                G->addEdge(atoi(operand[2].name.c_str()+1) + 1, destid, pcfg.commWeight[pcfg.levels]);
             }
             else if (operand[2].name.find("1'b") != std::string::npos) {
-                G->addEdge(0, destid, EDGEWEIGHT);
+                G->addEdge(0, destid, pcfg.commWeight[pcfg.levels]);
             }
         }
     }

@@ -1,10 +1,11 @@
-#include "./src/memory.h"
+#include "./src/pimconfig.h"
 #include "./src/booleandag.h"
 #include "./src/scheduler.h"
 #include "./src/importdag.h"
 #include "./ILP/ILP.h"
 #include <cstdio>
 #include <ctime>
+#include <string>
 
 using namespace std;
 
@@ -17,27 +18,47 @@ using namespace std;
  */
 int main(int argc, char *argv[])
 {
+    pcfg.setGlobalPIMConf(argv[2]);
+    string algorithm = "LBCP";  // defalt: LBCP
     if (argc < 3) {
         return 0;
+    }
+    if (argc >= 4) {
+        algorithm = argv[4];
     }
     clock_t begintime;
     begintime = clock();
     const char *inputfile = argv[1];
-    uint size = atoi(argv[2]);
-    uint Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
+    uint workload = atoi(argv[3]);
+    uint size = (workload+pcfg.chip_num-1) / pcfg.chip_num;
+    uint Bsize = (size + pcfg.block_cols - 1) / pcfg.block_cols;
+    uint blocknums = pcfg.block_nums;
+    uint max_pimthreads = pcfg.max_threads;
 
     BooleanDag *G = v2booleandag(inputfile);
 
-    uint top = (Bsize < MESHSIZE ? Bsize : MESHSIZE);
-    uint searchbound = LOG2(top);
-    if (NPOWEROF2(searchbound) < Bsize && NPOWEROF2(searchbound) < MESHSIZE) ++searchbound;
+    // uint top = (Bsize < blocknums ? Bsize : blocknums);
+    uint searchbound = LOG2(blocknums);
+    if (NPOWEROF2(searchbound) < Bsize && NPOWEROF2(searchbound) < blocknums) ++searchbound;
     // printf("Bsize:%d, searchbound:%d\n", Bsize, searchbound);
-    
-    Schedule *sche = new Schedule[LOG2(MESHSIZE)+1];
-    double *cost = new double[LOG2(MESHSIZE)+1];
+
+    Schedule *sche = new Schedule[LOG2(blocknums)+1];
+    double *cost = new double[LOG2(blocknums)+1];
 
     for (uint i = 0u; i <= searchbound; ++i) {
-        sche[i] = rankuDynamicWeightsSchedule(G, NPOWEROF2(i));
+        if (blocknums/NPOWEROF2(i) > max_pimthreads) {
+            cost[i] = 1e20;
+            continue;
+        }
+        if (algorithm == "HEFT") {
+            sche[i] = rankuHEFTSchedule(G, NPOWEROF2(i));
+        }
+        else if (algorithm == "DW") {
+            sche[i] = rankuDynamicWeightsSchedule(G, NPOWEROF2(i));
+        }
+        else {
+            sche[i] = rankuCPDynamicWeightsSchedule(G, NPOWEROF2(i));
+        }
         cost[i] = sche[i].latency;
     }
 
@@ -56,14 +77,16 @@ int main(int argc, char *argv[])
     bigint simdlatency = 0;
     double simdenergy = 0.0;
 
-    // printf("# compileCPUTime %ldms\n", (clock()-begintime) / (CLOCKS_PER_SEC/1000));
-    // printf("# data %u\n", size);
-    // printf("# input %u\n", G->getinputsize());
-    // printf("# output %u\n", G->getoutputsize());
+    printf("# compileCPUTime %ldms\n", (clock()-begintime) / (CLOCKS_PER_SEC/1000));
+    printf("# blockrows %u\n", pcfg.block_rows);
+    printf("# blockcols %u\n", pcfg.block_cols);
+    printf("# data %u\n", size);
+    printf("# input %u\n", G->getinputsize());
+    printf("# output %u\n", G->getoutputsize());
     for (uint i = 0u; i <= searchbound; ++i) {
         chunksize = 1 << i;
         for (uint j = 0; j < uint(val[i]+0.00001); ++j) {
-            // printInst(sche+i, offset, chunksize);
+            printInst(sche+i, offset, chunksize);
             offset += chunksize;
             // latency += sche[i].latency;
             // energy += sche[i].energy;
@@ -73,16 +96,16 @@ int main(int argc, char *argv[])
 
 
     // if SIMD
-    // uint ms = MESHSIZE * BLOCKCOL;
+    // uint ms = blocknums * pcfg.block_cols;
     // size = ((size + ms - 1) / ms) * ms;
-    // Bsize = (size + BLOCKCOL - 1) / BLOCKCOL;
-    // if (searchbound < LOG2(MESHSIZE)) {
-    //     searchbound = LOG2(MESHSIZE);
-    //     sche[searchbound] = rankuHEFTSchedule(G, MESHSIZE);
+    // Bsize = (size + pcfg.block_cols - 1) / pcfg.block_cols;
+    // if (searchbound < LOG2(blocknums)) {
+    //     searchbound = LOG2(blocknums);
+    //     sche[searchbound] = rankuHEFTSchedule(G, blocknums);
     //     cost[searchbound] = sche[searchbound].latency;
     // }
     
-    // for (uint j = 0; j < Bsize/MESHSIZE; ++j) {
+    // for (uint j = 0; j < Bsize/blocknums; ++j) {
     //     // printInst(sche+i, offset, chunksize);
     //     // offset += chunksize;
 

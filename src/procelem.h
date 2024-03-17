@@ -1,7 +1,7 @@
 /**  
  * @file    procelem.h
  * @brief   Processing Element Definition
- * @author  Chenu Tang
+ * @author  Chenyu Tang
  * @version 2.3
  * @date    2022-11-18
  * @note    
@@ -36,10 +36,11 @@ typedef struct _PE {
     std::vector<Assignment*>    tasks;  ///< Assigned tasks
     bigint opeft;            ///< earlist finish time
     std::map<uint, uint> cache;     ///< <taskid, index> record cached id of nodes
-    uint line[BLOCKROW];            ///< index -> taskid
-    uint smallestfreeidx;
-    uint overwriteflag;
-    _PE() : id(0), opeft(0), smallestfreeidx(0), overwriteflag(0) {for(uint i=0;i<BLOCKROW;++i)line[i]=UINT_MAX;};
+    uint *line;            ///< index -> taskid
+    uint smallestfreeidx;   ///< a flag record the smallest free index that starts at 0 and grows monotonically
+    uint overwriteflag;     ///< a flag record the smallest index that we can overwrite
+    _PE();
+    ~_PE() {if(line) delete line;}
 } ProcessElem;
 
 
@@ -55,7 +56,9 @@ class StageProcessors {
     double *loadenergy;     ///< the load energy of each PE
     double *midenergy;      ///< the operation+copy energy of each PE
     double *storeenergy;    ///< the store energy of each PE
-    std::deque<InstructionNameSpace::Instruction> inst;    ///< instruction lists
+    std::multimap<uint, InstructionNameSpace::Instruction> loadinstlist;
+    std::deque<InstructionNameSpace::Instruction> instlist;    ///< instruction lists
+    std::multimap<uint, InstructionNameSpace::Instruction> storeinstlist;
 
 public:
     StageProcessors *next;  ///< next stage
@@ -65,7 +68,7 @@ public:
     ~StageProcessors();
 
     /* Construction related */
-    int init(uint n);  // unlimited memory for DAG with certain number of tasks
+    int init(uint n);  ///< unlimited memory for DAG with certain number of tasks
     int clean();
 
     /* TaskAssignment */
@@ -108,8 +111,11 @@ public:
 
     /* Visitors */
     uint getTaskNum() const;
+    uint getTaskNum(uint id) const;
     bigint getLatency() const;
+    bigint getIOLatency() const;
     bigint getOPLatency() const;
+    double getIOEnergy() const;
     double getEnergy() const;
     uint const& getpnum() const;
     bigint const& getPEMidLatency(const uint &id) const;
@@ -122,6 +128,8 @@ public:
     uint getLine(uint taskid);
     uint const& getOverwritepos(uint peid) const;
     Assignment* getAssignmentByTask(uint taskid);
+
+    /// @brief a normal statistic function
     void getTime2SpatialUtil(std::map<bigint, uint> &res, bigint offset = 0);
 
     /* Printers */

@@ -1,7 +1,7 @@
 CC      = gcc
 CXX     = g++
 LINK    = g++
-CFLAGS  = -lOsiClp -lCbc -lClp
+CFLAGS  = -g -lOsiClp -lCbc -lClp
 BIN		= ./bin/
 RM		= rm -rf
 MKDIR	= mkdir
@@ -15,10 +15,13 @@ DIRS	= bin obj
 CXX_OBJS	= obj
 CXX_BINS	= bin
 
-all: $(DIRS) simulate main
+all: $(DIRS) codegen simulate
 
 $(DIRS):
 	$(MKDIR) $@
+
+codegen:
+	$(CXX) main.cpp $(SRCS) $(CFLAGS) -o $(CXX_BINS)/codegen
 
 
 simulate:
@@ -26,11 +29,7 @@ simulate:
 	cp $(CXX_BINS)/simulate simulation/simulate
 
 
-main:
-	$(CXX) main.cpp $(SRCS) $(CFLAGS) -o $(CXX_BINS)/main
-
-
 .PHONY:clean
 clean:
-	$(RM) $(CXX_BINS) $(CXX_OBJS)
+	$(RM) $(CXX_BINS) $(CXX_OBJS) simulation/simulate
 
