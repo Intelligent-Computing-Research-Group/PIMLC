@@ -1,9 +1,20 @@
-# PIMLC {#mainpage}
+# PIMLC
 Logic Compilation for Processing-in-Memory
  
  -------------------------------------------
 
 This project provide a compiler to convert high-level Boolean function (written as combinational verilog module) into the the low-level primitives support by bit-serial based processing-in-memory system.
+
+### Please cite our work if this project helps your research
+```
+@inproceedings{tang2024PIMLC,
+  title={PIMLC: Logic Compiler for Bit-serial Based PIM},
+  author={Tang, Chenyu and Nie,Chen and Qian, Weikang and He, Zhezhi},
+  booktitle={Design, Automation and Test in Europe Conference (DATE)},
+  year={2024},
+  organization={IEEE}
+}
+```
 
 ## Installation
 
